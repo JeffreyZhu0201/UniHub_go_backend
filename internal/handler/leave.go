@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"time"
+	"unihub/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -57,11 +58,16 @@ func (h *LeaveHandler) Apply(c *gin.Context) {
 func (h *LeaveHandler) Audit(c *gin.Context) {
 	auditorID := c.GetUint("userID")
 	leaveUUID := c.Param("uuid")
+	roleID := c.GetUint("roleID")
 
 	var req AuditLeaveRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	if havePermission, _ := service.RequirePermission(c, h.DB, roleID, "leave:approve"); !havePermission {
+		c.JSON(http.StatusForbidden, gin.H{"error": "无权限审批"})
 	}
 
 	var leave model.LeaveRequest
@@ -130,6 +136,11 @@ func (h *LeaveHandler) MyLeaves(c *gin.Context) {
 // ListPendingLeaves 辅导员查看待审批
 func (h *LeaveHandler) ListPendingLeaves(c *gin.Context) {
 	counselorID := c.GetUint("userID")
+	roleID := c.GetUint("roleID")
+	// 权限检查
+	if havePermission, _ := service.RequirePermission(c, h.DB, roleID, "leave:approve"); !havePermission {
+		c.JSON(http.StatusForbidden, gin.H{"error": "无权限审批"})
+	}
 
 	// 找到管理的部门
 	var deptIDs []uint

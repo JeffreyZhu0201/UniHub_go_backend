@@ -189,6 +189,37 @@ type TaskRecord struct {
 	CreatedAt time.Time // 提交时间
 }
 
+// 打卡任务实体
+type Ding struct {
+	ID         uint   `gorm:"primaryKey"`
+	LauncherID uint   `gorm:"index;not null"`
+	Title      string `gorm:"size:100;not null"`
+	StartTime  time.Time
+	EndTime    time.Time
+	// 经纬度
+	Latitude  float64 `gorm:"not null"`
+	Longitude float64 `gorm:"not null"`
+	// 允许的最大距离，单位米
+	Radius    float64 `gorm:"not null"`
+	UserID    uint    `gorm:"index;not null"`
+	DeptID    uint    `gorm:"index;not null"`
+	ClassID   uint    `gorm:"index;not null"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type DingStudent struct {
+	ID            uint `gorm:"primaryKey"`
+	DingID        uint `gorm:"index;not null"`
+	StudentID     uint `gorm:"index;not null"`
+	DingTime      time.Time
+	DingLatitude  float64 `gorm:"not null"`
+	DingLongitude float64 `gorm:"not null"`
+	Status        string  `gorm:"size:20"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
 // AutoMigrate migrates all models.
 func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
@@ -196,5 +227,6 @@ func AutoMigrate(db *gorm.DB) error {
 		&Department{}, &Class{}, &StudentDepartment{}, &StudentClass{},
 		&Developer{}, &App{},
 		&Notification{}, &LeaveRequest{}, &Task{}, &TaskRecord{},
+		&Ding{}, &DingStudent{},
 	)
 }

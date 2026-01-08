@@ -23,6 +23,7 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 	leaveH := &handler.LeaveHandler{DB: db}
 	taskH := &handler.TaskHandler{DB: db}
 	openH := &handler.OpenHandler{DB: db}
+	dingH := &handler.DingHandler{DB: db}
 
 	api := r.Group("/api/v1")
 	{
@@ -65,6 +66,9 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 
 			// 列表查看 (List View)
 			protected.GET("/students", userH.ListStudents)
+
+			// 打卡任务 (Ding Tasks)
+			protected.POST("/createdings", dingH.Create)
 		}
 
 		// 开放平台注册 (Open Platform Registration)

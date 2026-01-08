@@ -31,10 +31,8 @@ func (h *OrgHandler) CreateDepartment(c *gin.Context) {
 
 	// 权限检查：确保用户角色拥有创建部门权限
 	// 这里默认假设 "dept:create" 权限已分配给辅导员角色
-	isCounselor, _ := service.RequirePermission(c, h.DB, roleID, "dept:create")
-	if !isCounselor {
-		// 备用逻辑：如果是辅导员角色也可以
-		// ...
+	if havePermission, _ := service.RequirePermission(c, h.DB, roleID, "dept:create"); !havePermission {
+		c.JSON(http.StatusForbidden, gin.H{"error": "无权限创建部门"})
 	}
 
 	var req CreateOrgRequest
@@ -64,9 +62,10 @@ func (h *OrgHandler) CreateDepartment(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "部门创建成功", "id": dept.UUID, "invite_code": dept.InviteCode})
 }
 
-// CreateClass 教师创建班级
+// CreateClass 教师\导员创建班级
 func (h *OrgHandler) CreateClass(c *gin.Context) {
 	userID := c.GetUint("userID")
+	roleID := c.GetUint("roleID")
 
 	var req CreateOrgRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -74,16 +73,8 @@ func (h *OrgHandler) CreateClass(c *gin.Context) {
 		return
 	}
 
-	// 检查User是否是教师
-	var user model.User
-	if err := h.DB.Where("id = ?", userID).First(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户不存在"})
-		return
-	}
-
-	if err := h.DB.Where("id = ? AND role_id = (SELECT id FROM roles WHERE `key` = ?)", userID, "teacher").First(&user).Error; err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "仅教师可创建班级"})
-		return
+	if havePermission, _ := service.RequirePermission(c, h.DB, roleID, "class:create"); !havePermission {
+		c.JSON(http.StatusForbidden, gin.H{"error": "无权限创建部门"})
 	}
 
 	// 生成唯一邀请码
@@ -110,10 +101,15 @@ func (h *OrgHandler) CreateClass(c *gin.Context) {
 // StudentJoinDepartment 学生通过邀请码加入部门
 func (h *OrgHandler) StudentJoinDepartment(c *gin.Context) {
 	userID := c.GetUint("userID")
+	roleID := c.GetUint("roleID")
 	var req JoinOrgRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	if havePermission, _ := service.RequirePermission(c, h.DB, roleID, "dept:join"); !havePermission {
+		c.JSON(http.StatusForbidden, gin.H{"error": "无权限加入部门"})
 	}
 
 	var dept model.Department
@@ -153,10 +149,16 @@ func (h *OrgHandler) StudentJoinDepartment(c *gin.Context) {
 // StudentJoinClass 学生通过邀请码加入班级
 func (h *OrgHandler) StudentJoinClass(c *gin.Context) {
 	userID := c.GetUint("userID")
+	roleID := c.GetUint("roleID")
+
 	var req JoinOrgRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	if havePermission, _ := service.RequirePermission(c, h.DB, roleID, "class:join"); !havePermission {
+		c.JSON(http.StatusForbidden, gin.H{"error": "无权限加入班级"})
 	}
 
 	var class model.Class
@@ -188,6 +190,11 @@ func (h *OrgHandler) StudentJoinClass(c *gin.Context) {
 // ListMyDepartments 辅导员查看其创建的部门
 func (h *OrgHandler) ListMyDepartments(c *gin.Context) {
 	userID := c.GetUint("userID")
+	roleID := c.GetUint("roleID")
+	if havePermission, _ := service.RequirePermission(c, h.DB, roleID, "dept:list"); !havePermission {
+		c.JSON(http.StatusForbidden, gin.H{"error": "无权限查看部门"})
+	}
+
 	var depts []model.Department
 	if err := h.DB.Where("counselor_id = ?", userID).Find(&depts).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

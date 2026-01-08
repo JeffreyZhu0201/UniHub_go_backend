@@ -39,8 +39,10 @@ func PushNotification(notification model.Notification, DB *gorm.DB) (string, err
 		if err := DB.Model(&model.StudentClass{}).Where("class_id = ?", notification.TargetID).Pluck("student_id", &studentIDs).Error; err != nil {
 			return "查询班级学生失败", err
 		}
-	} else {
-		return "未知目标类型", nil
+	} else if notification.TargetType == "student" {
+		if err := DB.Model(&model.User{}).Where("id = ?", notification.TargetID).Pluck("id", &studentIDs).Error; err != nil {
+			return "查询学生失败", err
+		}
 	}
 
 	if len(studentIDs) == 0 {
