@@ -1,0 +1,27 @@
+server:
+  port: ":8080"
+  mode: "release"
+
+database:
+  driver: "mysql"
+  host: "unihub_mysql"
+  port: 3306
+  user: "root"
+  password: "root"
+  dbname: "unihub"
+  source: "root:root@tcp(unihub_mysql:3306)/unihub?charset=utf8mb4&parseTime=True&loc=Local"
+
+redis:
+  addr: "unihub_redis:6379"
+  password: ""
+
+jwt:
+  secret: "your-docker-secret-key-change-this"
+  expiration_hours: 24
+
+minio:
+  endpoint: "minio:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  bucket: "unihub-files"
+

@@ -1,0 +1,29 @@
+server:
+  port: ":8080"
+  mode: "debug"
+
+database:
+  driver: "mysql"
+  # 本地运行必须用 127.0.0.1
+  host: "127.0.0.1"
+  port: 3306
+  user: "root"
+  password: "root"
+  dbname: "unihub"
+  # 确保 source 字符串也匹配本地地址
+  source: "root:root@tcp(127.0.0.1:3306)/unihub?charset=utf8mb4&parseTime=True&loc=Local"
+
+redis:
+  # 本地运行必须用 127.0.0.1
+  addr: "127.0.0.1:6379"
+  password: "root"
+
+jwt:
+  secret: "your-super-secret-key-change-this"
+  expiration_hours: 24
+
+minio:
+  endpoint: "127.0.0.1:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  bucket: "unihub-files"
