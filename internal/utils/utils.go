@@ -15,7 +15,7 @@ func EndsWith(username string, s string) bool {
 	return username[len(username)-len(s):] == s
 }
 
-// generateInviteCode 生成8位随机大写字母邀请码
+// GenerateInviteCode 生成8位随机大写字母邀请码
 func GenerateInviteCode() string {
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	result := make([]byte, 8)
@@ -27,30 +27,30 @@ func GenerateInviteCode() string {
 }
 
 func PushNotification(notification model.Notification, DB *gorm.DB) (string, error) {
-	//notif := model.Notification{
-	//	Title:      req.Title,
-	//	Content:    req.Content,
-	//	SenderID:   userID,
-	//	TargetType: req.TargetType,
-	//	TargetID:   req.TargetID,
-	//}
-
 	// find target users
-	// send notification to target users
 	var studentIDs []uint
 	if notification.TargetType == "dept" {
 		// find users in department
-		if err := DB.Where("department_id = ?", notification.TargetID).Pluck("student_id", &studentIDs).Error; err != nil {
-			return "未找到目标学生", err
+		if err := DB.Model(&model.StudentDepartment{}).Where("department_id = ?", notification.TargetID).Pluck("student_id", &studentIDs).Error; err != nil {
+			return "查询部门学生失败", err
 		}
-	}
-	if notification.TargetType == "class" {
+	} else if notification.TargetType == "class" {
 		// find users in class
-		if err := DB.Where("class_id = ?", notification.TargetID).Pluck("student_id", &studentIDs).Error; err != nil {
-			return "未找到目标学生", err
+		if err := DB.Model(&model.StudentClass{}).Where("class_id = ?", notification.TargetID).Pluck("student_id", &studentIDs).Error; err != nil {
+			return "查询班级学生失败", err
 		}
+	} else {
+		return "未知目标类型", nil
 	}
+
+	if len(studentIDs) == 0 {
+		return "未找到目标学生", nil
+	}
+
 	// push to each student
-	//for _, sid := range studentIDs
+	// for _, sid := range studentIDs {
+	// 	// TODO: lookup user push token and send
+	// }
+
 	return "消息推送成功", nil
 }

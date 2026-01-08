@@ -22,12 +22,14 @@ type RegisterRequest struct {
 	OrgID     *uint   `json:"org_id"`
 	StaffNo   *string `json:"staff_no"`   // 教职工号 (辅导员/教师)
 	StudentNo *string `json:"student_no"` // 学号 (学生)
+	PushToken string  `json:"push_token"` // 推送令牌
 }
 
 // LoginRequest 登录请求参数
 type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username  string `json:"username" binding:"required"`
+	Password  string `json:"password" binding:"required"`
+	PushToken string `json:"push_token"`
 }
 
 // AuthHandler 认证处理器
@@ -55,7 +57,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	var role model.Role
-	if err := h.DB.Where("key = ?", req.RoleKey).First(&role).Error; err != nil {
+	if err := h.DB.Where("`key` = ?", req.RoleKey).First(&role).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的角色"})
 		return
 	}
@@ -75,6 +77,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	if err := h.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	//如果推送令牌存在则 更新推送令牌
+	user.PushToken = req.PushToken
+	if req.PushToken != "" {
+		user.PushToken = req.PushToken
+		h.DB.Save(&user)
 	}
 
 	// 自动登录返回Token (恢复为正常的小时过期)
@@ -105,6 +114,12 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)) != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "邮箱或密码错误"})
 		return
+	}
+
+	// 更新推送令牌
+	if req.PushToken != "" && req.PushToken != user.PushToken {
+		user.PushToken = req.PushToken
+		h.DB.Save(&user)
 	}
 
 	// 恢复为正常的小时过期

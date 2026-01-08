@@ -80,7 +80,8 @@ func (h *OrgHandler) CreateClass(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户不存在"})
 		return
 	}
-	if user.Role.Name != "teacher" {
+
+	if err := h.DB.Where("id = ? AND role_id = (SELECT id FROM roles WHERE `key` = ?)", userID, "teacher").First(&user).Error; err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "仅教师可创建班级"})
 		return
 	}

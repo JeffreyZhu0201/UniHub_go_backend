@@ -53,8 +53,9 @@ type User struct {
 	Password  string    `gorm:"size:255;not null"`
 	RoleID    uint      `gorm:"index"`
 	OrgUnitID *uint     `gorm:"index"`
-	StaffNo   *string   `gorm:"size:50"` // for admins/teachers/counselors
-	StudentNo *string   `gorm:"size:50"` // for students
+	StaffNo   *string   `gorm:"size:50"`  // for admins/teachers/counselors
+	StudentNo *string   `gorm:"size:50"`  // for students
+	PushToken string    `gorm:"size:255"` // for push notifications
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
