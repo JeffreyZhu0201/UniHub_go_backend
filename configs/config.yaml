@@ -20,7 +20,7 @@ redis:
 
 jwt:
   secret: "your-super-secret-key-change-this"
-  expiration_hours: 24
+  expiration_hours: 86400
 
 minio:
   endpoint: "127.0.0.1:9000"

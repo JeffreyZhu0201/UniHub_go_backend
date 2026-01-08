@@ -9,26 +9,26 @@ import (
 // Config holds application configuration loaded from yaml.
 type Config struct {
 	Server struct {
-		Port string
-		Mode string
-	}
+		Port string `mapstructure:"port"`
+		Mode string `mapstructure:"mode"`
+	} `mapstructure:"server"`
 	Database struct {
-		Driver   string
-		Host     string
-		Port     int
-		User     string
-		Password string
-		DBName   string
-		Source   string
-	}
+		Driver   string `mapstructure:"driver"`
+		Host     string `mapstructure:"host"`
+		Port     int    `mapstructure:"port"`
+		User     string `mapstructure:"user"`
+		Password string `mapstructure:"password"`
+		DBName   string `mapstructure:"dbname"`
+		Source   string `mapstructure:"source"`
+	} `mapstructure:"database"`
 	Redis struct {
-		Addr     string
-		Password string
-	}
+		Addr     string `mapstructure:"addr"`
+		Password string `mapstructure:"password"`
+	} `mapstructure:"redis"`
 	JWT struct {
-		Secret          string
-		ExpirationHours int
-	}
+		Secret          string `mapstructure:"secret"`
+		ExpirationHours int    `mapstructure:"expiration_hours"`
+	} `mapstructure:"jwt"`
 }
 
 // Load loads configuration from CONFIG_PATH env or defaults to configs/config.yaml.

@@ -1,9 +1,8 @@
 package handler
 
 import (
-	"crypto/rand"
-	"math/big"
 	"net/http"
+	"unihub/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -25,17 +24,6 @@ type JoinOrgRequest struct {
 	InviteCode string `json:"invite_code" binding:"required"`
 }
 
-// generateInviteCode 生成8位随机大写字母邀请码
-func generateInviteCode() string {
-	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	result := make([]byte, 8)
-	for i := range result {
-		num, _ := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
-		result[i] = charset[num.Int64()]
-	}
-	return string(result)
-}
-
 // CreateDepartment 辅导员创建部门
 func (h *OrgHandler) CreateDepartment(c *gin.Context) {
 	userID := c.GetUint("userID")
@@ -55,8 +43,11 @@ func (h *OrgHandler) CreateDepartment(c *gin.Context) {
 		return
 	}
 
-	inviteCode := generateInviteCode()
-	// 实际生产环境应检查邀请码唯一性，这里略过重试逻辑
+	inviteCode := utils.GenerateInviteCode()
+	// 实际生产环境应检查邀请码唯一性
+	for err := h.DB.Where("invite_code = ?", inviteCode).First(&model.Department{}).Error; err == nil; {
+		inviteCode = utils.GenerateInviteCode()
+	}
 
 	dept := model.Department{
 		UUID:        uuid.New(),
@@ -83,7 +74,22 @@ func (h *OrgHandler) CreateClass(c *gin.Context) {
 		return
 	}
 
-	inviteCode := generateInviteCode()
+	// 检查User是否是教师
+	var user model.User
+	if err := h.DB.Where("id = ?", userID).First(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户不存在"})
+		return
+	}
+	if user.Role.Name != "teacher" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "仅教师可创建班级"})
+		return
+	}
+
+	// 生成唯一邀请码
+	inviteCode := utils.GenerateInviteCode()
+	for err := h.DB.Where("invite_code = ?", inviteCode).First(&model.Class{}).Error; err == nil; {
+		inviteCode = utils.GenerateInviteCode()
+	}
 
 	class := model.Class{
 		UUID:       uuid.New(),

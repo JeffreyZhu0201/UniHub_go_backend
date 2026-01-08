@@ -133,6 +133,8 @@ func (h *LeaveHandler) ListPendingLeaves(c *gin.Context) {
 
 	// 找到管理的部门
 	var deptIDs []uint
+
+	// 检查我的部门
 	h.DB.Model(&model.Department{}).Where("counselor_id = ?", counselorID).Pluck("id", &deptIDs)
 
 	if len(deptIDs) == 0 {
@@ -149,6 +151,7 @@ func (h *LeaveHandler) ListPendingLeaves(c *gin.Context) {
 		return
 	}
 
+	// 找出我的部门未审核的学生请假记录
 	var leaves []model.LeaveRequest
 	h.DB.Where("student_id IN ? AND status = ?", studentIDs, "pending").Find(&leaves)
 

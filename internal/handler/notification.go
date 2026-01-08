@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"unihub/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -57,6 +58,11 @@ func (h *NotificationHandler) Create(c *gin.Context) {
 
 	if err := h.DB.Create(&notif).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if _, err := utils.PushNotification(notif, h.DB); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
