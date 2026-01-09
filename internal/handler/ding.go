@@ -86,3 +86,15 @@ func (d *DingHandler) ListMyCreatedDingsRecords(context *gin.Context) {
 	}
 	context.JSON(http.StatusOK, gin.H{"records": studentRecordByDing})
 }
+
+func (d *DingHandler) ExportMyCreatedDingRecords(context *gin.Context) {
+	// 导出某一次打卡记录
+	//userId := context.GetUint("userID")
+	dingId := context.Param("dingId")
+	filePath, err := d.Service.ExportMyCreatedDingRecords(dingId)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "导出打卡记录失败"})
+		return
+	}
+	context.JSON(http.StatusOK, gin.H{"message": "导出所选打卡记录成功", "fileRelativePath": filePath})
+}

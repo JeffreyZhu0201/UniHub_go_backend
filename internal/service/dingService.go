@@ -17,6 +17,7 @@ type DingService interface {
 	ListAllMyDings(studentID uint) (map[string][]model.Ding, error)
 	ListMyCreatedDings(launcherID uint) ([]model.Ding, error)
 	ListMyCreatedDingsRecords(userId uint, dingID string) (interface{}, interface{})
+	ExportMyCreatedDingRecords(dingId string) (interface{}, interface{})
 }
 
 type dingService struct {
@@ -134,4 +135,17 @@ func (s *dingService) ListMyCreatedDingsRecords(userId uint, dingID string) (int
 		return nil, err
 	}
 	return dingRecords, nil
+}
+
+func (s *dingService) ExportMyCreatedDingRecords(dingId string) (interface{}, interface{}) {
+	// filePath,err
+	dingsRecords, err := s.dingRepo.GetDingRecordsByDingID(dingId) // []dingStudent
+	if err != nil {
+		return nil, err
+	}
+	exportedFilePath, err := utils.ExportToExcel(dingsRecords, "ding_records_"+dingId+".xlsx")
+	if err != nil {
+		return nil, err
+	}
+	return exportedFilePath, nil
 }

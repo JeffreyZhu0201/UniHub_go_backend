@@ -54,6 +54,8 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 			auth.POST("/register", authH.Register)
 			auth.POST("/login", authH.Login)
 		}
+		// set resource folder
+		api.Static("/resources", "./resources")
 
 		// 受保护路由 (Internal Users)
 		protected := api.Group("/")
@@ -95,6 +97,7 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 			protected.GET("/dings/mydings", dingH.ListMyDings)
 			protected.GET("/dings/mycreateddings", dingH.ListMyCreatedDings)
 			protected.GET("/dings/mycreateddingsrecords/:dingId", dingH.ListMyCreatedDingsRecords)
+			protected.GET("/dings/mycreateddingsrecordsexport/:dingId", dingH.ExportMyCreatedDingRecords) // by ID
 		}
 
 		// 开放平台注册 (Open Platform Registration)
