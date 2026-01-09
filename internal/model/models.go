@@ -82,6 +82,11 @@ type Department struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
+type Target struct {
+	Type string
+	ID   uint
+}
+
 // Class represents teacher-managed class with invite code.
 type Class struct {
 	ID         uint   `gorm:"primaryKey"`
@@ -175,10 +180,10 @@ type Task struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
-//func (t *Task) BeforeCreate(tx *gorm.DB) (err error) {
-//	t.UUID = uuid.New()
-//	return
-//}
+func (t *Task) BeforeCreate(tx *gorm.DB) (err error) {
+	t.UUID = uuid.New()
+	return
+}
 
 // TaskRecord 任务记录 (学生提交)
 type TaskRecord struct {

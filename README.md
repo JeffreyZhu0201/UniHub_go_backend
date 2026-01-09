@@ -122,10 +122,12 @@ docker-compose up --build -d
 
 > 首次启动时，MySQL 容器会自动执行 `scripts/init.sql` 初始化数据。
 
-## 📖 API 文档
+## 📖 API 文档与测试
 
-详细的 API 接口说明及 Curl 示例请查阅：
-👉 [UniHub API Documentation](docs/api.md)
+项目提供了详细的 API 测试文档，包含所有接口的 `curl` 示例。
+
+- **测试文档路径**: [`docs/api_test_collection.md`](docs/api_test_collection.md)
+- **接口文档**: 查看 `docs/api.md` (如有)
 
 主要模块包括：
 - `/api/v1/auth/*`: 认证
@@ -140,4 +142,3 @@ docker-compose up --build -d
 ## 📄 许可证
 
 本项目采用 [MIT License](LICENSE) 许可证。
-

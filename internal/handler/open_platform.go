@@ -1,18 +1,18 @@
 package handler
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"net/http"
+	"unihub/internal/service"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-
-	"unihub/internal/model"
 )
 
 type OpenHandler struct {
-	DB *gorm.DB
+	Service service.OpenService
+}
+
+func NewOpenHandler(s service.OpenService) *OpenHandler {
+	return &OpenHandler{Service: s}
 }
 
 type RegisterDevRequest struct {
@@ -32,19 +32,9 @@ func (h *OpenHandler) RegisterDeveloper(c *gin.Context) {
 		return
 	}
 
-	// 生成 Secret
-	bytes := make([]byte, 32)
-	rand.Read(bytes)
-	secret := hex.EncodeToString(bytes)
-
-	dev := model.Developer{
-		Name:   req.Name,
-		Email:  req.Email,
-		Secret: secret,
-	}
-
-	if err := h.DB.Create(&dev).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "邮箱已被注册或系统错误"})
+	dev, err := h.Service.RegisterDeveloper(req.Name, req.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -57,11 +47,10 @@ func (h *OpenHandler) RegisterDeveloper(c *gin.Context) {
 
 // CreateApp 创建应用
 func (h *OpenHandler) CreateApp(c *gin.Context) {
-	// 简单验证：通过 Header "X-Dev-Secret" 验证开发者身份 (实际应更复杂)
+	// 简单验证：通过 Header "X-Dev-Secret" 验证开发者身份
 	secret := c.GetHeader("X-Dev-Secret")
-	var dev model.Developer
-	if err := h.DB.Where("secret = ?", secret).First(&dev).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "无效的开发者密钥"})
+	if secret == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "需要开发者密钥"})
 		return
 	}
 
@@ -71,25 +60,13 @@ func (h *OpenHandler) CreateApp(c *gin.Context) {
 		return
 	}
 
-	// 生成 AppID, AppSecret
-	appIDData := make([]byte, 8)
-	rand.Read(appIDData)
-	appID := hex.EncodeToString(appIDData)
-
-	appSecretData := make([]byte, 16)
-	rand.Read(appSecretData)
-	appSecret := hex.EncodeToString(appSecretData)
-
-	app := model.App{
-		DeveloperID: dev.ID,
-		Name:        req.Name,
-		AppID:       appID,
-		AppSecret:   appSecret,
-		RateLimit:   60, // 默认 60 req/min
-	}
-
-	if err := h.DB.Create(&app).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	app, err := h.Service.CreateApp(secret, req.Name)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if err.Error() == "无效的开发者密钥" {
+			status = http.StatusUnauthorized
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
 

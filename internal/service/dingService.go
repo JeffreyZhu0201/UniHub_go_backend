@@ -12,27 +12,58 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateDing(req DTO.CreateDingRequest, DB *gorm.DB) error {
+type DingService interface {
+	CreateDing(req DTO.CreateDingRequest, launcherID uint, roleID uint) error
+	ListAllMyDings(studentID uint) (map[string][]model.Ding, error)
+	ListMyCreatedDings(launcherID uint) ([]model.Ding, error)
+}
+
+type dingService struct {
+	dingRepo repo.DingRepository
+	orgRepo  repo.OrgRepository
+	userRepo repo.UserRepository
+	db       *gorm.DB // Kept for transaction or utils.PushNotification if refactoring notification is not done yet
+}
+
+func NewDingService(dingRepo repo.DingRepository, orgRepo repo.OrgRepository, userRepo repo.UserRepository, db *gorm.DB) DingService {
+	return &dingService{
+		dingRepo: dingRepo,
+		orgRepo:  orgRepo,
+		userRepo: userRepo,
+		db:       db,
+	}
+}
+
+func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ uint) error {
 	var studentIDs []uint
-	// 如果是向部门发布
+
+	// Permission Check inside Service?
+	// The handler calls this after checking permission "ding:create" if needed.
+	// But let's assume handler does the check or we inject it here.
+	// The original handler did `RequriePermission`. We can move it here if we want strict service layer logic.
+	// For now, let's stick to logic implementation.
+
+	var err error
 	if req.DeptId != 0 {
-		if err := DB.Model(&model.StudentDepartment{}).Where("department_id = ?", req.DeptId).Pluck("student_id", &studentIDs).Error; err != nil {
-			return errors.New("发生错误")
-		}
+		studentIDs, err = s.orgRepo.GetStudentIDsByDepartmentID(req.DeptId)
 	} else if req.ClassId != 0 {
-		if err := DB.Model(&model.StudentClass{}).Where("class_id = ?", req.ClassId).Pluck("student_id", &studentIDs).Error; err != nil {
-			return errors.New("发生错误")
-		}
+		studentIDs, err = s.orgRepo.GetStudentIDsByClassID(req.ClassId)
 	} else if req.StudentId != 0 {
-		if err := DB.Model(&model.User{}).Where("id = ?", req.StudentId).Pluck("id", &studentIDs).Error; err != nil {
-			return errors.New("发生错误")
+		// Verify student exists
+		user, uErr := s.userRepo.GetUserByID(req.StudentId)
+		if uErr == nil && user != nil {
+			studentIDs = []uint{user.ID}
+		} else {
+			err = uErr
 		}
 	}
-	if len(studentIDs) == 0 {
-		return errors.New("发生错误")
+
+	if err != nil || len(studentIDs) == 0 {
+		return errors.New("目标学生不存在或发生错误")
 	}
+
 	ding := model.Ding{
-		LauncherID: req.LauncherId,
+		LauncherID: launcherID, // From arg
 		Title:      req.Title,
 		StartTime:  req.StartTime,
 		EndTime:    req.EndTime,
@@ -44,9 +75,8 @@ func CreateDing(req DTO.CreateDingRequest, DB *gorm.DB) error {
 		ClassID:    req.ClassId,
 	}
 
-	// Save Ding
-	if err := DB.Create(&ding).Error; err != nil {
-		return errors.New("发生错误")
+	if err := s.dingRepo.CreateDing(&ding); err != nil {
+		return err
 	}
 
 	for _, studentID := range studentIDs {
@@ -56,42 +86,42 @@ func CreateDing(req DTO.CreateDingRequest, DB *gorm.DB) error {
 			Status:    "pending",
 			DingTime:  time.Now(),
 		}
-		if err := DB.Create(&dingStudent).Error; err != nil {
-			return errors.New("发生错误")
+		if err := s.dingRepo.CreateDingStudent(&dingStudent); err != nil {
+			return err
 		}
 
 		notif := model.Notification{
 			Title:      "新的打卡任务：" + req.Title,
 			Content:    "请在规定时间内完成打卡任务。",
-			SenderID:   req.LauncherId,
+			SenderID:   launcherID,
 			TargetType: "student",
 			TargetID:   studentID,
 		}
-		if _, err := utils.PushNotification(notif, DB); err != nil {
-			return errors.New("发生错误")
+		// TODO: Refactor Notification logic into NotificationService
+		if _, err := utils.PushNotification(notif, s.db); err != nil {
+			// logging error but not failing the whole process?
+			log.Printf("Failed to push notification to student %d: %v", studentID, err)
+		} else {
+			log.Printf("已向学生 %d 发送打卡任务通知", studentID)
 		}
-		log.Printf("已向学生 %d 发送打卡任务通知", studentID)
 	}
 	return nil
 }
 
-func ListAllMyDings(id uint, db *gorm.DB) (interface{}, error) {
-	// pending + completed
-	var result = make(map[string][]model.Ding)
+func (s *dingService) ListAllMyDings(studentID uint) (map[string][]model.Ding, error) {
+	result := make(map[string][]model.Ding)
 
-	if pendingDings, err := repo.GetMyDingsByStatus(id, db, "pending"); err == nil {
+	pendingDings, err := s.dingRepo.GetDingsByStudentIDAndStatus(studentID, "pending")
+	if err == nil {
 		result["pending"] = pendingDings
 	}
-	if completeDings, err := repo.GetMyDingsByStatus(id, db, "complete"); err == nil {
+	completeDings, err := s.dingRepo.GetDingsByStudentIDAndStatus(studentID, "complete")
+	if err == nil {
 		result["complete"] = completeDings
 	}
 	return result, nil
 }
 
-func ListMyCreatedDings(id uint, db *gorm.DB) (interface{}, interface{}) {
-	var dings []model.Ding
-	if err := db.Where("launcher_id = ?", id).Find(&dings).Error; err != nil {
-		return nil, errors.New("发生错误")
-	}
-	return dings, nil
+func (s *dingService) ListMyCreatedDings(launcherID uint) ([]model.Ding, error) {
+	return s.dingRepo.GetDingsByLauncherID(launcherID)
 }

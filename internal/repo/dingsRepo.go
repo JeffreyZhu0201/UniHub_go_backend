@@ -1,31 +1,55 @@
 package repo
 
 import (
-	"errors"
 	"unihub/internal/model"
 
 	"gorm.io/gorm"
 )
 
-// 学生打卡任务,返回该学生未完成打卡任务
-func GetMyDingsByStatus(id uint, db *gorm.DB, status string) ([]model.Ding, error) {
-	var dings []uint
-	if err := db.Model(&model.DingStudent{}).Where("student_id = ? AND status = ?", id, status).Pluck("ding_id", &dings).Error; err != nil {
-		return nil, errors.New("发生错误")
-	}
-	var dingDetails []model.Ding
-	if err := db.Where("id IN ?", dings).Find(&dingDetails).Error; err != nil {
-		return nil, errors.New("发生错误")
-	}
-	return dingDetails, nil
+type DingRepository interface {
+	CreateDing(ding *model.Ding) error
+	CreateDingStudent(ds *model.DingStudent) error
+	GetDingsByStudentIDAndStatus(studentID uint, status string) ([]model.Ding, error)
+	GetDingsByLauncherID(launcherID uint) ([]model.Ding, error)
 }
 
-//
-//// 教师/辅导员查看自己创建的打卡任务
-//func ListMyCreatedDings(id uint, db *gorm.DB) (interface{}, error) {
-//	var dings []model.Ding
-//	if err := db.Where("launcher_id = ?", id).Find(&dings).Error; err != nil {
-//		return nil, errors.New("发生错误")
-//	}
-//	return dings, nil
-//}
+type dingRepository struct {
+	db *gorm.DB
+}
+
+func NewDingRepository(db *gorm.DB) DingRepository {
+	return &dingRepository{db: db}
+}
+
+func (r *dingRepository) CreateDing(ding *model.Ding) error {
+	return r.db.Create(ding).Error
+}
+
+func (r *dingRepository) CreateDingStudent(ds *model.DingStudent) error {
+	return r.db.Create(ds).Error
+}
+
+func (r *dingRepository) GetDingsByStudentIDAndStatus(studentID uint, status string) ([]model.Ding, error) {
+	var dingIDs []uint
+	if err := r.db.Model(&model.DingStudent{}).Where("student_id = ? AND status = ?", studentID, status).Pluck("ding_id", &dingIDs).Error; err != nil {
+		return nil, err
+	}
+
+	if len(dingIDs) == 0 {
+		return []model.Ding{}, nil
+	}
+
+	var dings []model.Ding
+	if err := r.db.Where("id IN ?", dingIDs).Find(&dings).Error; err != nil {
+		return nil, err
+	}
+	return dings, nil
+}
+
+func (r *dingRepository) GetDingsByLauncherID(launcherID uint) ([]model.Ding, error) {
+	var dings []model.Ding
+	if err := r.db.Where("launcher_id = ?", launcherID).Find(&dings).Error; err != nil {
+		return nil, err
+	}
+	return dings, nil
+}

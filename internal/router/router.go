@@ -6,6 +6,8 @@ import (
 
 	"unihub/internal/config"
 	"unihub/internal/handler"
+	"unihub/internal/repo"
+	"unihub/internal/service"
 	"unihub/pkg/middleware"
 )
 
@@ -15,15 +17,34 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
+	// 初始化 Repositories
+	userRepo := repo.NewUserRepository(db)
+	orgRepo := repo.NewOrgRepository(db)
+	notifRepo := repo.NewNotificationRepository(db)
+	leaveRepo := repo.NewLeaveRepository(db)
+	taskRepo := repo.NewTaskRepository(db)
+	openRepo := repo.NewOpenRepository(db)
+	dingRepo := repo.NewDingRepository(db)
+
+	// 初始化 Services
+	authSvc := service.NewAuthService(userRepo, orgRepo, cfg)
+	orgSvc := service.NewOrgService(orgRepo, userRepo)
+	userSvc := service.NewUserService(userRepo, orgRepo)
+	notifSvc := service.NewNotificationService(notifRepo, orgRepo, userRepo, db)
+	leaveSvc := service.NewLeaveService(leaveRepo, orgRepo, userRepo)
+	taskSvc := service.NewTaskService(taskRepo, orgRepo, userRepo)
+	openSvc := service.NewOpenService(openRepo)
+	dingSvc := service.NewDingService(dingRepo, orgRepo, userRepo, db)
+
 	// 初始化 Handlers
-	authH := &handler.AuthHandler{DB: db, Cfg: cfg}
-	orgH := &handler.OrgHandler{DB: db}
-	userH := &handler.UserHandler{DB: db}
-	notifH := &handler.NotificationHandler{DB: db}
-	leaveH := &handler.LeaveHandler{DB: db}
-	taskH := &handler.TaskHandler{DB: db}
-	openH := &handler.OpenHandler{DB: db}
-	dingH := &handler.DingHandler{DB: db}
+	authH := handler.NewAuthHandler(authSvc)
+	orgH := handler.NewOrgHandler(orgSvc)
+	userH := handler.NewUserHandler(userSvc)
+	notifH := handler.NewNotificationHandler(notifSvc)
+	leaveH := handler.NewLeaveHandler(leaveSvc)
+	taskH := handler.NewTaskHandler(taskSvc)
+	openH := handler.NewOpenHandler(openSvc)
+	dingH := handler.NewDingHandler(dingSvc, userRepo)
 
 	api := r.Group("/api/v1")
 	{

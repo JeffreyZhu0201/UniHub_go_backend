@@ -1,0 +1,697 @@
+{
+	"info": {
+		"_postman_id": "b3e3e3e3-e3e3-4b3e-8b3e-3e3e3e3e3e3e",
+		"name": "UniHub API",
+		"description": "API collection for UniHub Campus Management System",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register (Student)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nickname\": \"Student One\",\n    \"email\": \"student1@test.com\",\n    \"password\": \"password123\",\n    \"role_key\": \"student\",\n    \"student_no\": \"2023001\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register (Counselor)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nickname\": \"Counselor One\",\n    \"email\": \"counselor1@test.com\",\n    \"password\": \"password123\",\n    \"role_key\": \"counselor\",\n    \"staff_no\": \"T2023001\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register (Teacher)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nickname\": \"Teacher One\",\n    \"email\": \"teacher1@test.com\",\n    \"password\": \"password123\",\n    \"role_key\": \"teacher\",\n    \"staff_no\": \"T2023002\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"token\", jsonData.token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"student1@test.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Org Management",
+			"item": [
+				{
+					"name": "Create Department",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Computer Science Dept\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/departments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"departments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List My Departments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/departments/mine",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"departments",
+								"mine"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Class",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Math Class 101\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/classes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"classes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List My Classes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/classes/mine",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"classes",
+								"mine"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Join Department",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"invite_code\": \"<INVITE_CODE>\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/departments/join",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"departments",
+								"join"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Join Class",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"invite_code\": \"<INVITE_CODE>\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/classes/join",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"classes",
+								"join"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Features",
+			"item": [
+				{
+					"name": "Leaves",
+					"item": [
+						{
+							"name": "Apply for Leave",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"type\": \"Sick Leave\",\n    \"start_time\": \"2023-11-01T08:00:00Z\",\n    \"end_time\": \"2023-11-03T18:00:00Z\",\n    \"reason\": \"Flu\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/leaves",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leaves"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List My Leaves",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leaves/mine",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leaves",
+										"mine"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List Pending Leaves",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/leaves/pending",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leaves",
+										"pending"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Audit Leave",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"leave_id\": 1,\n    \"status\": \"approved\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/leaves/audit/audit",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"leaves",
+										"audit",
+										"audit"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Notifications",
+					"item": [
+						{
+							"name": "Create Notification",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Exam Schedule\",\n    \"content\": \"Midterm exams start next week.\",\n    \"target_type\": \"dept\",\n    \"target_id\": 1\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/notifications",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"notifications"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List My Notifications",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/notifications/mine",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"notifications",
+										"mine"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Ding & Tasks",
+					"item": [
+						{
+							"name": "Create Ding",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"Morning Check-in\",\n    \"start_time\": \"2023-11-01T08:00:00Z\",\n    \"end_time\": \"2023-11-01T09:00:00Z\",\n    \"latitude\": 39.9042,\n    \"longitude\": 116.4074,\n    \"radius\": 500,\n    \"dept_id\": 1\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/createdings",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"createdings"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List My Dings",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/mydings",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"mydings"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List Created Dings",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/mycreateddings",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"mycreateddings"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List My Tasks",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/tasks/mine",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tasks",
+										"mine"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Open Platform",
+			"item": [
+				{
+					"name": "Register Developer",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Dev One\",\n    \"email\": \"dev1@test.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/open/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"open",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create App",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Dev-Secret",
+								"value": "<DEV_SECRET>",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"My Cool App\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/open/apps",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"open",
+								"apps"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Public Profile (Auth via Headers)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-App-ID",
+								"value": "<APP_ID>",
+								"type": "text"
+							},
+							{
+								"key": "X-App-Secret",
+								"value": "<APP_SECRET>",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/start/v1/user/1/public_profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"start",
+								"v1",
+								"user",
+								"1",
+								"public_profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/user/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Students",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/students",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"students"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

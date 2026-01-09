@@ -1,18 +1,19 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
+	"unihub/internal/service"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-
-	"unihub/internal/model"
 )
 
 type TaskHandler struct {
-	DB *gorm.DB
+	Service service.TaskService
+}
+
+func NewTaskHandler(s service.TaskService) *TaskHandler {
+	return &TaskHandler{Service: s}
 }
 
 type CreateTaskRequest struct {
@@ -38,22 +39,19 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 
-	// 权限检查 (略，同 Notification)
-
-	configBytes, _ := json.Marshal(req.Config)
-
-	task := model.Task{
+	serviceReq := service.CreateTaskRequest{
 		Title:       req.Title,
 		Type:        req.Type,
 		Description: req.Description,
-		CreatorID:   userID,
 		TargetType:  req.TargetType,
 		TargetID:    req.TargetID,
+		CreatorID:   userID,
 		Deadline:    req.Deadline,
-		Config:      string(configBytes),
+		Config:      req.Config,
 	}
 
-	if err := h.DB.Create(&task).Error; err != nil {
+	task, err := h.Service.CreateTask(serviceReq)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -65,22 +63,8 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 func (h *TaskHandler) GetMyTasks(c *gin.Context) {
 	userID := c.GetUint("userID")
 
-	// 获取所属部门ID和班级ID
-	var deptID uint
-	h.DB.Model(&model.StudentDepartment{}).Where("student_id = ?", userID).Pluck("department_id", &deptID)
-	var classIDs []uint
-	h.DB.Model(&model.StudentClass{}).Where("student_id = ?", userID).Pluck("class_id", &classIDs)
-
-	var tasks []model.Task
-	query := h.DB.Where("(target_type = ? AND target_id = ?)", "dept", deptID)
-	if len(classIDs) > 0 {
-		query = query.Or("(target_type = ? AND target_id IN ?)", "class", classIDs)
-	}
-
-	// 也查询 target_type = student AND target_id = userID (例如销假签到)
-	query = query.Or("(target_type = ? AND target_id = ?)", "student", userID)
-
-	if err := query.Order("created_at desc").Find(&tasks).Error; err != nil {
+	tasks, err := h.Service.GetMyTasks(userID)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -99,36 +83,8 @@ func (h *TaskHandler) SubmitTask(c *gin.Context) {
 		return
 	}
 
-	var task model.Task
-	if err := h.DB.Where("uuid = ?", taskUUID).First(&task).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "任务不存在"})
-		return
-	}
-
-	if time.Now().After(task.Deadline) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "任务已截止"})
-		return
-	}
-
-	// 检查是否已提交
-	var count int64
-	h.DB.Model(&model.TaskRecord{}).Where("task_id = ? AND student_id = ?", task.ID, userID).Count(&count)
-	if count > 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "请勿重复提交"})
-		return
-	}
-
-	dataBytes, _ := json.Marshal(req.Data)
-
-	record := model.TaskRecord{
-		TaskID:    task.ID,
-		StudentID: userID,
-		Status:    "completed",
-		Data:      string(dataBytes),
-	}
-
-	if err := h.DB.Create(&record).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := h.Service.SubmitTask(userID, taskUUID, req.Data); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
