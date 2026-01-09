@@ -22,7 +22,7 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 	orgRepo := repo.NewOrgRepository(db)
 	notifRepo := repo.NewNotificationRepository(db)
 	leaveRepo := repo.NewLeaveRepository(db)
-	taskRepo := repo.NewTaskRepository(db)
+	//taskRepo := repo.NewTaskRepository(db)
 	openRepo := repo.NewOpenRepository(db)
 	dingRepo := repo.NewDingRepository(db)
 
@@ -32,7 +32,7 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 	userSvc := service.NewUserService(userRepo, orgRepo)
 	notifSvc := service.NewNotificationService(notifRepo, orgRepo, userRepo, db)
 	leaveSvc := service.NewLeaveService(leaveRepo, orgRepo, userRepo)
-	taskSvc := service.NewTaskService(taskRepo, orgRepo, userRepo)
+	//taskSvc := service.NewTaskService(taskRepo, orgRepo, userRepo)
 	openSvc := service.NewOpenService(openRepo)
 	dingSvc := service.NewDingService(dingRepo, orgRepo, userRepo, db)
 
@@ -42,7 +42,7 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 	userH := handler.NewUserHandler(userSvc)
 	notifH := handler.NewNotificationHandler(notifSvc)
 	leaveH := handler.NewLeaveHandler(leaveSvc)
-	taskH := handler.NewTaskHandler(taskSvc)
+	//taskH := handler.NewTaskHandler(taskSvc)
 	openH := handler.NewOpenHandler(openSvc)
 	dingH := handler.NewDingHandler(dingSvc, userRepo)
 
@@ -59,18 +59,20 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware(cfg))
 		{
-			protected.GET("/user/profile", userH.GetProfile)
+			protected.GET("/user/profile", userH.GetProfile) // 获取用户信息
 
 			// 组织管理 (Org Management)
 			// 辅导员相关 (Counselor)
-			protected.POST("/departments", orgH.CreateDepartment)      // 创建部门
-			protected.GET("/departments/mine", orgH.ListMyDepartments) // 我的部门
-			protected.GET("/leaves/pending", leaveH.ListPendingLeaves) // 待审批请假
-			protected.POST("/leaves/:uuid/audit", leaveH.Audit)        // 审批请假
+			protected.POST("/departments", orgH.CreateDepartment)                  // 创建部门
+			protected.GET("/departments/mine", orgH.ListMyDepartments)             // 我创建的部门
+			protected.GET("/departments/mine/:deptId", orgH.ListDepartmentStudent) // 通过部门Id获取部门详情和学生信息
+			protected.GET("/leaves/pending", leaveH.ListPendingLeaves)             // 待审批请假
+			protected.POST("/leaves/:uuid/audit", leaveH.Audit)                    // 审批请假
 
 			// 教师相关 (Teacher)
-			protected.POST("/classes", orgH.CreateClass)       // 创建班级
-			protected.GET("/classes/mine", orgH.ListMyClasses) // 我的班级
+			protected.POST("/classes", orgH.CreateClass)                   // 创建班级
+			protected.GET("/classes/mine", orgH.ListMyClasses)             // 我的班级
+			protected.GET("/classes/mine/:classId", orgH.ListClassStudent) // 通过班级Id获取班级详情和学生信息
 
 			// 通用发布 (Counselor & Teacher)
 			protected.POST("/notifications", notifH.Create) // 发布通知
@@ -82,8 +84,8 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 			protected.POST("/leaves", leaveH.Apply)                         // 申请请假
 			protected.GET("/leaves/mine", leaveH.MyLeaves)                  // 我的请假
 			protected.GET("/notifications/mine", notifH.GetMyNotifications) // 我的通知
-			protected.GET("/tasks/mine", taskH.GetMyTasks)                  // 我的任务
-			protected.POST("/tasks/:uuid/submit", taskH.SubmitTask)         // 提交任务
+			//protected.GET("/tasks/mine", taskH.GetMyTasks)                  // 我的任务
+			//protected.POST("/tasks/:uuid/submit", taskH.SubmitTask)         // 提交任务
 
 			// 列表查看 (List View)
 			protected.GET("/students", userH.ListStudents)

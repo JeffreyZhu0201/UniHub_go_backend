@@ -24,6 +24,10 @@ type OrgRepository interface {
 	GetStudentIDsByClassID(classID uint) ([]uint, error)
 	GetStudentDepartmentID(studentID uint) (uint, error)
 	GetStudentClassIDs(studentID uint) ([]uint, error)
+	GetClassDetailsByID(id string) (interface{}, interface{})
+	ListStudentsByClassID(id string) (interface{}, interface{})
+	GetDepartmentDetailsByID(deptId string) (interface{}, interface{})
+	ListStudentsByDepartmentID(deptId string) (interface{}, interface{})
 }
 
 type orgRepository struct {
@@ -106,6 +110,25 @@ func (r *orgRepository) ListDepartmentsByCounselorID(counselorID uint) ([]model.
 	return depts, err
 }
 
+func (r *orgRepository) GetDepartmentDetailsByID(deptId string) (interface{}, interface{}) {
+	var department model.Department
+	if err := r.db.Where("id = ?", deptId).First(&department).Error; err != nil {
+		return nil, err
+	}
+	return department, nil
+}
+
+func (r *orgRepository) ListStudentsByDepartmentID(deptId string) (interface{}, interface{}) {
+	// 列出该部门的所有学生
+	var students []model.User
+	if err := r.db.Joins("JOIN student_departments ON users.id = student_departments.student_id").
+		Where("student_departments.department_id = ?", deptId).
+		Find(&students).Error; err != nil {
+		return nil, err
+	}
+	return students, nil
+}
+
 func (r *orgRepository) ListClassesByTeacherID(teacherID uint) ([]model.Class, error) {
 	var classes []model.Class
 	err := r.db.Where("teacher_id = ?", teacherID).Find(&classes).Error
@@ -134,4 +157,28 @@ func (r *orgRepository) GetStudentClassIDs(studentID uint) ([]uint, error) {
 	var classIDs []uint
 	err := r.db.Model(&model.StudentClass{}).Where("student_id = ?", studentID).Pluck("class_id", &classIDs).Error
 	return classIDs, err
+}
+
+func (r *orgRepository) GetClassDetailsByID(classId string) (interface{}, interface{}) {
+	var class model.Class
+	if err := r.db.Where("id = ?", classId).First(&class).Error; err != nil {
+		return nil, err
+	}
+	return class, nil
+	//var students []model.User
+	//if err := r.db.Joins("JOIN student_classes ON users.id = student_classes.student_id").
+	//	Where("student_classes.class_id = ?", class.ID).
+	//	Find(&students).Error; err != nil {
+	//	return &class, nil
+	//}
+}
+
+func (r *orgRepository) ListStudentsByClassID(classId string) (interface{}, interface{}) {
+	var students []model.User
+	if err := r.db.Joins("JOIN student_classes ON users.id = student_classes.student_id").
+		Where("student_classes.class_id = ?", classId).
+		Find(&students).Error; err != nil {
+		return nil, err
+	}
+	return students, nil
 }
