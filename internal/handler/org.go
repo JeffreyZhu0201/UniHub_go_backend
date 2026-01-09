@@ -5,7 +5,6 @@ import (
 	"unihub/internal/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"unihub/internal/model"
@@ -48,7 +47,6 @@ func (h *OrgHandler) CreateDepartment(c *gin.Context) {
 	}
 
 	dept := model.Department{
-		UUID:        uuid.New(),
 		Name:        req.Name,
 		InviteCode:  inviteCode,
 		CounselorID: userID,
@@ -59,7 +57,7 @@ func (h *OrgHandler) CreateDepartment(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "部门创建成功", "id": dept.UUID, "invite_code": dept.InviteCode})
+	c.JSON(http.StatusOK, gin.H{"message": "部门创建成功", "id": dept.ID, "invite_code": dept.InviteCode})
 }
 
 // CreateClass 教师\导员创建班级
@@ -84,7 +82,6 @@ func (h *OrgHandler) CreateClass(c *gin.Context) {
 	}
 
 	class := model.Class{
-		UUID:       uuid.New(),
 		Name:       req.Name,
 		InviteCode: inviteCode,
 		TeacherID:  userID,
@@ -95,7 +92,7 @@ func (h *OrgHandler) CreateClass(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "班级创建成功", "id": class.UUID, "invite_code": class.InviteCode})
+	c.JSON(http.StatusOK, gin.H{"message": "班级创建成功", "id": class.ID, "invite_code": class.InviteCode})
 }
 
 // StudentJoinDepartment 学生通过邀请码加入部门

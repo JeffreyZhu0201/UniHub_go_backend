@@ -6,7 +6,6 @@ import (
 	"unihub/internal/service"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"unihub/internal/model"
@@ -24,7 +23,8 @@ type ApplyLeaveRequest struct {
 }
 
 type AuditLeaveRequest struct {
-	Status string `json:"status" binding:"required,oneof=approved rejected"`
+	Status  string `json:"status" binding:"required,oneof=approved rejected"`
+	LeaveID uint   `json:"leave_id" binding:"required"`
 }
 
 // Apply 申请请假
@@ -37,7 +37,6 @@ func (h *LeaveHandler) Apply(c *gin.Context) {
 	}
 
 	leave := model.LeaveRequest{
-		UUID:      uuid.New(),
 		StudentID: userID,
 		Type:      req.Type,
 		StartTime: req.StartTime,
@@ -51,13 +50,12 @@ func (h *LeaveHandler) Apply(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "申请成功", "id": leave.UUID})
+	c.JSON(http.StatusOK, gin.H{"message": "申请成功", "id": leave.ID})
 }
 
 // Audit 审批请假 (辅导员)
 func (h *LeaveHandler) Audit(c *gin.Context) {
 	auditorID := c.GetUint("userID")
-	leaveUUID := c.Param("uuid")
 	roleID := c.GetUint("roleID")
 
 	var req AuditLeaveRequest
@@ -71,7 +69,7 @@ func (h *LeaveHandler) Audit(c *gin.Context) {
 	}
 
 	var leave model.LeaveRequest
-	if err := h.DB.Where("uuid = ?", leaveUUID).First(&leave).Error; err != nil {
+	if err := h.DB.Where("id = ?", req.LeaveID).First(&leave).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "请假记录不存在"})
 		return
 	}
@@ -104,16 +102,7 @@ func (h *LeaveHandler) Audit(c *gin.Context) {
 
 	// 附加功能：审批通过后自动生成签到任务 (销假签到)
 	if req.Status == "approved" {
-		task := model.Task{
-			UUID:        uuid.New(),
-			Title:       "销假签到",
-			Type:        "leave_check",
-			Description: "请假结束返校签到",
-			CreatorID:   auditorID,
-			TargetType:  "student", // 特殊类型：针对单人
-			TargetID:    leave.StudentID,
-			Deadline:    leave.EndTime.Add(2 * time.Hour), // 截止时间：请假结束后2小时
-		}
+
 		// 注意：Task模型TargetType需要支持 'student' 或者我们创建个针对特定学生的任务逻辑
 		// 这里简化逻辑，先创建。实际业务可能需要在这里特殊处理。
 		h.DB.Create(&task)

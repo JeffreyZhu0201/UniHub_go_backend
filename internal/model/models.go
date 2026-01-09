@@ -47,15 +47,15 @@ type OrgUnit struct {
 
 // User represents login identity.
 type User struct {
-	ID        uint      `gorm:"primaryKey"`
-	UUID      uuid.UUID `gorm:"type:char(36);uniqueIndex"`
-	Username  string    `gorm:"size:100;uniqueIndex;not null"`
-	Password  string    `gorm:"size:255;not null"`
-	RoleID    uint      `gorm:"index"`
-	OrgUnitID *uint     `gorm:"index"`
-	StaffNo   *string   `gorm:"size:50"`  // for admins/teachers/counselors
-	StudentNo *string   `gorm:"size:50"`  // for students
-	PushToken string    `gorm:"size:255"` // for push notifications
+	ID        uint    `gorm:"primaryKey"`
+	Nickname  string  `gorm:"size:100;not null"`
+	Email     string  `gorm:"size:120;uniqueIndex;not null"`
+	Password  string  `gorm:"size:255;not null"`
+	RoleID    uint    `gorm:"index"`
+	OrgUnitID *uint   `gorm:"index"`
+	StaffNo   *string `gorm:"size:50"`  // for admins/teachers/counselors
+	StudentNo *string `gorm:"size:50"`  // for students
+	PushToken string  `gorm:"size:255"` // for push notifications
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
@@ -72,11 +72,10 @@ type RolePermission struct {
 
 // Department represents counselor-managed department with invite code.
 type Department struct {
-	ID          uint      `gorm:"primaryKey"`
-	UUID        uuid.UUID `gorm:"type:char(36);uniqueIndex"`
-	Name        string    `gorm:"size:100;not null"`
-	InviteCode  string    `gorm:"size:12;uniqueIndex;not null"`
-	CounselorID uint      `gorm:"index"`
+	ID          uint   `gorm:"primaryKey"`
+	Name        string `gorm:"size:100;not null"`
+	InviteCode  string `gorm:"size:12;uniqueIndex;not null"`
+	CounselorID uint   `gorm:"index"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
@@ -84,11 +83,10 @@ type Department struct {
 
 // Class represents teacher-managed class with invite code.
 type Class struct {
-	ID         uint      `gorm:"primaryKey"`
-	UUID       uuid.UUID `gorm:"type:char(36);uniqueIndex"`
-	Name       string    `gorm:"size:100;not null"`
-	InviteCode string    `gorm:"size:12;uniqueIndex;not null"`
-	TeacherID  uint      `gorm:"index"`
+	ID         uint   `gorm:"primaryKey"`
+	Name       string `gorm:"size:100;not null"`
+	InviteCode string `gorm:"size:12;uniqueIndex;not null"`
+	TeacherID  uint   `gorm:"index"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
@@ -112,24 +110,22 @@ type StudentClass struct {
 
 // Developer represents open platform developer.
 type Developer struct {
-	ID        uint      `gorm:"primaryKey"`
-	UUID      uuid.UUID `gorm:"type:char(36);uniqueIndex"`
-	Name      string    `gorm:"size:100;not null"`
-	Email     string    `gorm:"size:120;uniqueIndex;not null"`
-	Secret    string    `gorm:"size:64;not null"`
+	ID        uint   `gorm:"primaryKey"`
+	Name      string `gorm:"size:100;not null"`
+	Email     string `gorm:"size:120;uniqueIndex;not null"`
+	Secret    string `gorm:"size:64;not null"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
 // App represents registered application with rate limit.
 type App struct {
-	ID          uint      `gorm:"primaryKey"`
-	UUID        uuid.UUID `gorm:"type:char(36);uniqueIndex"`
-	DeveloperID uint      `gorm:"index;not null"`
-	Name        string    `gorm:"size:100;not null"`
-	AppID       string    `gorm:"size:32;uniqueIndex;not null"`
-	AppSecret   string    `gorm:"size:64;not null"`
-	RateLimit   int       `gorm:"not null"` // requests per minute
+	ID          uint   `gorm:"primaryKey"`
+	DeveloperID uint   `gorm:"index;not null"`
+	Name        string `gorm:"size:100;not null"`
+	AppID       string `gorm:"size:32;uniqueIndex;not null"`
+	AppSecret   string `gorm:"size:64;not null"`
+	RateLimit   int    `gorm:"not null"` // requests per minute
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -149,7 +145,6 @@ type Notification struct {
 // LeaveRequest 请假申请
 type LeaveRequest struct {
 	ID        uint      `gorm:"primaryKey"`
-	UUID      uuid.UUID `gorm:"type:char(36);uniqueIndex"`
 	StudentID uint      `gorm:"index;not null"`
 	Type      string    `gorm:"size:50"` // 病假、事假等
 	StartTime time.Time `gorm:"not null"`
@@ -166,7 +161,7 @@ type LeaveRequest struct {
 // Task 任务 (签到/查寝)
 type Task struct {
 	ID          uint      `gorm:"primaryKey"`
-	UUID        uuid.UUID `gorm:"type:char(36);uniqueIndex"`
+	UUID        uuid.UUID `gorm:"type:char(36);uniqueIndex"` // Added UUID
 	Title       string    `gorm:"size:100;not null"`
 	Type        string    `gorm:"size:50;not null"` // sign_in, dorm_check, leave_check
 	Description string    `gorm:"size:255"`
@@ -177,6 +172,11 @@ type Task struct {
 	Config      string    `gorm:"type:json"` // 任务配置：如签到经纬度、距离限制等
 	CreatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
+}
+
+func (t *Task) BeforeCreate(tx *gorm.DB) (err error) {
+	t.UUID = uuid.New()
+	return
 }
 
 // TaskRecord 任务记录 (学生提交)

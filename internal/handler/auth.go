@@ -5,7 +5,6 @@ import (
 	"unihub/internal/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
@@ -16,7 +15,8 @@ import (
 
 // RegisterRequest 注册请求参数
 type RegisterRequest struct {
-	Username  string  `json:"username" binding:"required"`
+	Nickname  string  `json:"nickname" binding:"required"`
+	Email     string  `json:"email" binding:"required"`
 	Password  string  `json:"password" binding:"required"`
 	RoleKey   string  `json:"role_key" binding:"required"`
 	OrgID     *uint   `json:"org_id"`
@@ -27,7 +27,7 @@ type RegisterRequest struct {
 
 // LoginRequest 登录请求参数
 type LoginRequest struct {
-	Username  string `json:"username" binding:"required"`
+	Email     string `json:"email" binding:"required"`
 	Password  string `json:"password" binding:"required"`
 	PushToken string `json:"push_token"`
 }
@@ -47,11 +47,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	// 如果Username长度小于8且不是以.com结尾，返回错误
-	if len(req.Username) < 8 && !utils.EndsWith(req.Username, ".com") {
+	if len(req.Email) < 8 && !utils.EndsWith(req.Email, ".com") {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "邮箱长度必须至少为8位"})
 		return
 	}
-	if !utils.EndsWith(req.Username, ".com") {
+	if !utils.EndsWith(req.Email, ".com") {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "邮箱必须以 .com 结尾"})
 		return
 	}
@@ -65,8 +65,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	// 密码加密
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	user := model.User{
-		UUID:      uuid.New(),
-		Username:  req.Username,
+		Email:     req.Email,
 		Password:  string(hashed),
 		RoleID:    role.ID, // 通过roleKey获取RoleID
 		OrgUnitID: req.OrgID,
@@ -106,7 +105,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	var user model.User
-	if err := h.DB.Where("username = ?", req.Username).First(&user).Error; err != nil {
+	if err := h.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "邮箱或密码错误"})
 		return
 	}

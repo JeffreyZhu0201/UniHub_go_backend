@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"unihub/internal/model"
@@ -39,7 +38,6 @@ func (h *OpenHandler) RegisterDeveloper(c *gin.Context) {
 	secret := hex.EncodeToString(bytes)
 
 	dev := model.Developer{
-		UUID:   uuid.New(),
 		Name:   req.Name,
 		Email:  req.Email,
 		Secret: secret,
@@ -83,7 +81,6 @@ func (h *OpenHandler) CreateApp(c *gin.Context) {
 	appSecret := hex.EncodeToString(appSecretData)
 
 	app := model.App{
-		UUID:        uuid.New(),
 		DeveloperID: dev.ID,
 		Name:        req.Name,
 		AppID:       appID,

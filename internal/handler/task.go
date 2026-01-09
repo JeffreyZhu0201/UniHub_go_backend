@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"unihub/internal/model"
@@ -44,7 +43,6 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 	configBytes, _ := json.Marshal(req.Config)
 
 	task := model.Task{
-		UUID:        uuid.New(),
 		Title:       req.Title,
 		Type:        req.Type,
 		Description: req.Description,
@@ -60,7 +58,7 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "任务发布成功", "id": task.UUID})
+	c.JSON(http.StatusOK, gin.H{"message": "任务发布成功", "id": task.ID, "uuid": task.UUID})
 }
 
 // GetMyTasks 学生查看任务列表
