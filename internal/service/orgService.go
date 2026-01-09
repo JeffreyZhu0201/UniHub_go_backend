@@ -15,6 +15,8 @@ type OrgService interface {
 	StudentJoinClass(studentID, roleID uint, inviteCode string) error
 	ListMyDepartments(counselorID, roleID uint) ([]model.Department, error)
 	ListMyClasses(teacherID uint) ([]model.Class, error)
+	ListMyClassStudent(userId uint, classId string) (interface{}, interface{})
+	ListMyDepartmentStudent(userId uint, deptId string) (interface{}, interface{})
 }
 
 type orgService struct {
@@ -161,9 +163,43 @@ func (s *orgService) ListMyDepartments(counselorID, roleID uint) ([]model.Depart
 	return s.orgRepo.ListDepartmentsByCounselorID(counselorID)
 }
 
+func (s *orgService) ListMyDepartmentStudent(userId uint, deptId string) (interface{}, interface{}) {
+	// TODO : check Permission
+
+	deptDetails, err := s.orgRepo.GetDepartmentDetailsByID(deptId) // interface{}
+	if err != nil {
+		return nil, err
+	}
+	students, err := s.orgRepo.ListStudentsByDepartmentID(deptId) // []
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]interface{})
+	result["deptDetails"] = deptDetails
+	result["students"] = students
+	return result, nil
+}
+
 func (s *orgService) ListMyClasses(teacherID uint) ([]model.Class, error) {
 	// Assuming teachers have permission to list their classes by default or checked earlier.
 	// Adding simple permission check if needed, but original code didn't check permission explicitly for class listing
 	// (Check handler/org.go: ListMyClasses doesn't call RequirePermission, unlike ListMyDepartments)
 	return s.orgRepo.ListClassesByTeacherID(teacherID)
+}
+
+func (s *orgService) ListMyClassStudent(userId uint, classId string) (interface{}, interface{}) {
+	// TODO : check Permission
+
+	classDetails, err := s.orgRepo.GetClassDetailsByID(classId) // interface{}
+	if err != nil {
+		return nil, err
+	}
+	students, err := s.orgRepo.ListStudentsByClassID(classId) // []
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]interface{})
+	result["classDetails"] = classDetails
+	result["students"] = students
+	return result, nil
 }

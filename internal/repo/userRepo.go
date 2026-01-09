@@ -69,6 +69,7 @@ func (r *userRepository) CheckPermission(roleID uint, permCode string) (bool, er
 }
 
 func (r *userRepository) GetUserByIDWithRole(id uint) (*model.User, error) {
+	// 通过UserId查询用户信息，并预加载角色信息
 	var user model.User
 	if err := r.db.Preload("Role").First(&user, id).Error; err != nil {
 		return nil, err

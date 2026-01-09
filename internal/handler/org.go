@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"unihub/internal/service"
 
@@ -113,6 +114,18 @@ func (h *OrgHandler) ListMyDepartments(c *gin.Context) {
 	c.JSON(http.StatusOK, depts)
 }
 
+func (h *OrgHandler) ListDepartmentStudent(context *gin.Context) {
+	userID := context.GetUint("userID")
+	deptID := context.Param("deptId") // to uint
+
+	deptDetailWithStudent, err := h.Service.ListMyDepartmentStudent(userID, deptID)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": errors.New("获取部门学生信息失败")})
+		return
+	}
+	context.JSON(http.StatusOK, deptDetailWithStudent)
+}
+
 // ListMyClasses 教师查看其创建的班级
 func (h *OrgHandler) ListMyClasses(c *gin.Context) {
 	userID := c.GetUint("userID")
@@ -123,4 +136,16 @@ func (h *OrgHandler) ListMyClasses(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, classes)
+}
+
+func (h *OrgHandler) ListClassStudent(context *gin.Context) {
+	userID := context.GetUint("userID")
+	classID := context.Param("classId") // to uint
+
+	classDetailWithStudent, err := h.Service.ListMyClassStudent(userID, classID) // {classId: "xxx",className:"xxx", students: [...]}
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": errors.New("获取班级学生信息失败")})
+		return
+	}
+	context.JSON(http.StatusOK, classDetailWithStudent)
 }

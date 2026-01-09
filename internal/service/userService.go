@@ -58,7 +58,7 @@ func (s *userService) ListStudents(userID, roleID uint) ([]model.User, error) {
 			}
 		}
 	} else if roleKey == "teacher" {
-		classes, err := s.orgRepo.ListClassesByTeacherID(userID)
+		classes, err := s.orgRepo.ListClassesByTeacherID(userID) // 找出所有该教师负责的班级
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +67,7 @@ func (s *userService) ListStudents(userID, roleID uint) ([]model.User, error) {
 			classIDs = append(classIDs, c.ID)
 		}
 		if len(classIDs) > 0 {
-			students, err = s.userRepo.ListStudentsByClassIDs(classIDs)
+			students, err = s.userRepo.ListStudentsByClassIDs(classIDs) // 返回这些班级所有学生
 			if err != nil {
 				return nil, err
 			}
