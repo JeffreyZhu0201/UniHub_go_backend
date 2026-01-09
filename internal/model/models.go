@@ -47,21 +47,22 @@ type OrgUnit struct {
 
 // User represents login identity.
 type User struct {
-	ID        uint    `gorm:"primaryKey"`
-	Nickname  string  `gorm:"size:100;not null"`
-	Email     string  `gorm:"size:120;uniqueIndex;not null"`
-	Password  string  `gorm:"size:255;not null"`
-	RoleID    uint    `gorm:"index"`
-	OrgUnitID *uint   `gorm:"index"`
-	StaffNo   *string `gorm:"size:50"`  // for admins/teachers/counselors
-	StudentNo *string `gorm:"size:50"`  // for students
-	PushToken string  `gorm:"size:255"` // for push notifications
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ID       uint   `gorm:"primaryKey"`
+	Nickname string `gorm:"size:100;not null"`
+	Email    string `gorm:"size:120;uniqueIndex;not null"`
+	Password string `gorm:"size:255;not null"`
+	RoleID   uint   `gorm:"index"`
+	//OrgUnitID    *uint   `gorm:"index"`
+	DepartmentID uint    `gorm:"index"`
+	StaffNo      *string `gorm:"size:50"`  // for admins/teachers/counselors
+	StudentNo    *string `gorm:"size:50"`  // for students
+	PushToken    string  `gorm:"size:255"` // for push notifications
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 
-	Role Role    `gorm:"foreignKey:RoleID"`
-	Org  OrgUnit `gorm:"foreignKey:OrgUnitID"`
+	Role Role `gorm:"foreignKey:RoleID"`
+	//Department Department `gorm:"foreignKey:DepartmentID"`
 }
 
 // RolePermission defines many-to-many link.
@@ -174,10 +175,10 @@ type Task struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
-func (t *Task) BeforeCreate(tx *gorm.DB) (err error) {
-	t.UUID = uuid.New()
-	return
-}
+//func (t *Task) BeforeCreate(tx *gorm.DB) (err error) {
+//	t.UUID = uuid.New()
+//	return
+//}
 
 // TaskRecord 任务记录 (学生提交)
 type TaskRecord struct {

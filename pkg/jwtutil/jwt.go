@@ -15,12 +15,11 @@ type Claims struct {
 }
 
 // Generate signs a token with given secret and ttl duration.
-func Generate(secret string, ExpireHours int, userID, roleID uint, orgID *uint) (string, error) {
+func Generate(secret string, ExpireHours int, userID, roleID uint) (string, error) {
 	ttl := time.Duration(ExpireHours) * time.Hour
 	claims := Claims{
 		UserID: userID,
 		RoleID: roleID,
-		OrgID:  orgID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(ttl)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

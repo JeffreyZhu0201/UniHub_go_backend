@@ -6,6 +6,7 @@ import (
 	"time"
 	"unihub/internal/DTO"
 	"unihub/internal/model"
+	"unihub/internal/repo"
 	"unihub/internal/utils"
 
 	"gorm.io/gorm"
@@ -72,4 +73,25 @@ func CreateDing(req DTO.CreateDingRequest, DB *gorm.DB) error {
 		log.Printf("已向学生 %d 发送打卡任务通知", studentID)
 	}
 	return nil
+}
+
+func ListAllMyDings(id uint, db *gorm.DB) (interface{}, error) {
+	// pending + completed
+	var result = make(map[string][]model.Ding)
+
+	if pendingDings, err := repo.GetMyDingsByStatus(id, db, "pending"); err == nil {
+		result["pending"] = pendingDings
+	}
+	if completeDings, err := repo.GetMyDingsByStatus(id, db, "complete"); err == nil {
+		result["complete"] = completeDings
+	}
+	return result, nil
+}
+
+func ListMyCreatedDings(id uint, db *gorm.DB) (interface{}, interface{}) {
+	var dings []model.Ding
+	if err := db.Where("launcher_id = ?", id).Find(&dings).Error; err != nil {
+		return nil, errors.New("发生错误")
+	}
+	return dings, nil
 }

@@ -1,3 +1,6 @@
+# Drop database unihub;
+# create database unihub;
+
 -- Initialize Roles
 INSERT INTO roles (name, `key`, data_scope, created_at, updated_at) VALUES
 ('Super Admin', 'super_admin', 'all', NOW(), NOW()),

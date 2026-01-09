@@ -53,7 +53,7 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 
 			// 通用发布 (Counselor & Teacher)
 			protected.POST("/notifications", notifH.Create) // 发布通知
-			protected.POST("/tasks", taskH.CreateTask)      // 发布任务
+			//protected.POST("/tasks", taskH.CreateTask)      // 发布任务
 
 			// 学生相关 (Student)
 			protected.POST("/departments/join", orgH.StudentJoinDepartment) // 加入部门
@@ -69,6 +69,8 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 
 			// 打卡任务 (Ding Tasks)
 			protected.POST("/createdings", dingH.Create)
+			protected.GET("/mydings", dingH.ListMyDings)
+			protected.GET("/mycreateddings", dingH.ListMyCreatedDings)
 		}
 
 		// 开放平台注册 (Open Platform Registration)

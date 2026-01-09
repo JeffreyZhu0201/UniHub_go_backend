@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"unihub/internal/utils"
 
@@ -139,7 +140,12 @@ func (h *OrgHandler) StudentJoinDepartment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
+	log.Printf("Student %d joined Department %d", userID, dept.ID)
+	// 更新学生的部门ID字段
+	if err := h.DB.Model(&model.User{}).Where("id = ?", userID).Update("department_id", dept.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新学生部门信息失败"})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "加入部门成功"})
 }
 

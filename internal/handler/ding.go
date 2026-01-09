@@ -37,3 +37,33 @@ func (d *DingHandler) Create(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "创建打卡任务成功"})
 }
+
+func (d *DingHandler) ListMyDings(context *gin.Context) {
+	userID := context.GetUint("userID")
+
+	dingsDetails, err := service.ListAllMyDings(userID, d.DB)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "获取打卡任务失败"})
+		return
+	}
+	context.JSON(http.StatusOK, dingsDetails)
+
+}
+
+func (d *DingHandler) ListMyCreatedDings(context *gin.Context) {
+	userID := context.GetUint("userID")
+	//roleID := context.GetUint("roleID")
+
+	// 权限检查：确保用户角色拥有查看创建的打卡任务权限
+	//if havePermission, _ := service.RequirePermission(context, d.DB, roleID, "ding:view_created"); !havePermission {
+	//	context.JSON(403, gin.H{"error": "无权限查看创建的打卡任务"})
+	//	return
+	//}
+
+	dings, err := service.ListMyCreatedDings(userID, d.DB)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "获取我创建的打卡任务失败"})
+		return
+	}
+	context.JSON(http.StatusOK, gin.H{"dings": dings})
+}
