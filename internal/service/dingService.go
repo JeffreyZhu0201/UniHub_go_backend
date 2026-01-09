@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateDing(req DTO.CreateDingRequest, DB *gorm.DB, userID uint) error {
+func CreateDing(req DTO.CreateDingRequest, DB *gorm.DB) error {
 	var studentIDs []uint
 	// 如果是向部门发布
 	if req.DeptId != 0 {
@@ -31,7 +31,7 @@ func CreateDing(req DTO.CreateDingRequest, DB *gorm.DB, userID uint) error {
 		return errors.New("发生错误")
 	}
 	ding := model.Ding{
-		LauncherID: userID,
+		LauncherID: req.LauncherId,
 		Title:      req.Title,
 		StartTime:  req.StartTime,
 		EndTime:    req.EndTime,
@@ -62,7 +62,7 @@ func CreateDing(req DTO.CreateDingRequest, DB *gorm.DB, userID uint) error {
 		notif := model.Notification{
 			Title:      "新的打卡任务：" + req.Title,
 			Content:    "请在规定时间内完成打卡任务。",
-			SenderID:   userID,
+			SenderID:   req.LauncherId,
 			TargetType: "student",
 			TargetID:   studentID,
 		}

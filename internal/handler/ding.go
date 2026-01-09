@@ -29,7 +29,9 @@ func (d *DingHandler) Create(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	if err := service.CreateDing(req, d.DB, userID); err != nil {
+	req.LauncherId = userID // 设置发布者为当前用户
+
+	if err := service.CreateDing(req, d.DB); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建打卡任务失败"})
 		return
 	}

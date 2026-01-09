@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"time"
+	"unihub/internal/DTO"
 	"unihub/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -95,6 +96,7 @@ func (h *LeaveHandler) Audit(c *gin.Context) {
 	leave.AuditorID = &auditorID
 	leave.AuditTime = &now
 
+	// 插入
 	if err := h.DB.Save(&leave).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -102,12 +104,22 @@ func (h *LeaveHandler) Audit(c *gin.Context) {
 
 	// 附加功能：审批通过后自动生成签到任务 (销假签到)
 	if req.Status == "approved" {
+		ding := DTO.CreateDingRequest{
+			StudentId:  leave.StudentID,
+			LauncherId: leave.StudentID,
+			Title:      "已完成请假，请在规定时间内销假签到",
+			StartTime:  leave.EndTime,
+			EndTime:    leave.EndTime.Add(2 * time.Hour), // 销假签到时间窗口为请假结束后2小时内
+			Latitude:   200.0,
+			Longitude:  200.0,
+			Radius:     200.0,
+		}
 
-		// 注意：Task模型TargetType需要支持 'student' 或者我们创建个针对特定学生的任务逻辑
-		// 这里简化逻辑，先创建。实际业务可能需要在这里特殊处理。
-		h.DB.Create(&task)
+		if err := service.CreateDing(ding, h.DB); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "审批成功，但创建销假签到任务失败"})
+			return
+		}
 	}
-
 	c.JSON(http.StatusOK, gin.H{"message": "审批完成"})
 }
 
