@@ -11,6 +11,7 @@ type DingRepository interface {
 	CreateDingStudent(ds *model.DingStudent) error
 	GetDingsByStudentIDAndStatus(studentID uint, status string) ([]model.Ding, error)
 	GetDingsByLauncherID(launcherID uint) ([]model.Ding, error)
+	GetDingRecordsByDingID(dingId string) (interface{}, interface{})
 }
 
 type dingRepository struct {
@@ -52,4 +53,12 @@ func (r *dingRepository) GetDingsByLauncherID(launcherID uint) ([]model.Ding, er
 		return nil, err
 	}
 	return dings, nil
+}
+
+func (r *dingRepository) GetDingRecordsByDingID(dingId string) (interface{}, interface{}) {
+	var dingRecords []model.DingStudent
+	if err := r.db.Where("ding_id = ?", dingId).Find(&dingRecords).Error; err != nil {
+		return nil, err
+	}
+	return dingRecords, nil
 }

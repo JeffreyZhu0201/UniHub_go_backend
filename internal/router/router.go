@@ -91,9 +91,10 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 			protected.GET("/students", userH.ListStudents)
 
 			// 打卡任务 (Ding Tasks)
-			protected.POST("/createdings", dingH.Create)
-			protected.GET("/mydings", dingH.ListMyDings)
-			protected.GET("/mycreateddings", dingH.ListMyCreatedDings)
+			protected.POST("/dings/createdings", dingH.Create)
+			protected.GET("/dings/mydings", dingH.ListMyDings)
+			protected.GET("/dings/mycreateddings", dingH.ListMyCreatedDings)
+			protected.GET("/dings/mycreateddingsrecords/:dingId", dingH.ListMyCreatedDingsRecords)
 		}
 
 		// 开放平台注册 (Open Platform Registration)

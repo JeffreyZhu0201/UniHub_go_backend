@@ -73,3 +73,16 @@ func (d *DingHandler) ListMyCreatedDings(context *gin.Context) {
 	}
 	context.JSON(http.StatusOK, gin.H{"dings": dings})
 }
+
+func (d *DingHandler) ListMyCreatedDingsRecords(context *gin.Context) {
+	userID := context.GetUint("userID")
+	dingId := context.Param("dingId")
+
+	// get from repo
+	studentRecordByDing, err := d.Service.ListMyCreatedDingsRecords(userID, dingId)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "获取打卡记录失败"})
+		return
+	}
+	context.JSON(http.StatusOK, gin.H{"records": studentRecordByDing})
+}

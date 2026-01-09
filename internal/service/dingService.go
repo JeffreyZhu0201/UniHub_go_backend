@@ -16,6 +16,7 @@ type DingService interface {
 	CreateDing(req DTO.CreateDingRequest, launcherID uint, roleID uint) error
 	ListAllMyDings(studentID uint) (map[string][]model.Ding, error)
 	ListMyCreatedDings(launcherID uint) ([]model.Ding, error)
+	ListMyCreatedDingsRecords(userId uint, dingID string) (interface{}, interface{})
 }
 
 type dingService struct {
@@ -124,4 +125,13 @@ func (s *dingService) ListAllMyDings(studentID uint) (map[string][]model.Ding, e
 
 func (s *dingService) ListMyCreatedDings(launcherID uint) ([]model.Ding, error) {
 	return s.dingRepo.GetDingsByLauncherID(launcherID)
+}
+
+func (s *dingService) ListMyCreatedDingsRecords(userId uint, dingID string) (interface{}, interface{}) {
+	// 查询该ding所有学生的状态
+	dingRecords, err := s.dingRepo.GetDingRecordsByDingID(dingID) // []dingStudent
+	if err != nil {
+		return nil, err
+	}
+	return dingRecords, nil
 }
