@@ -28,6 +28,7 @@ type OrgRepository interface {
 	ListStudentsByClassID(id string) (interface{}, interface{})
 	GetDepartmentDetailsByID(deptId string) (interface{}, interface{})
 	ListStudentsByDepartmentID(deptId string) (interface{}, interface{})
+	ListStudentsByCounselorID(userId uint) ([]model.User, interface{})
 }
 
 type orgRepository struct {
@@ -177,6 +178,16 @@ func (r *orgRepository) ListStudentsByClassID(classId string) (interface{}, inte
 	var students []model.User
 	if err := r.db.Joins("JOIN student_classes ON users.id = student_classes.student_id").
 		Where("student_classes.class_id = ?", classId).
+		Find(&students).Error; err != nil {
+		return nil, err
+	}
+	return students, nil
+}
+func (r *orgRepository) ListStudentsByCounselorID(userId uint) ([]model.User, interface{}) {
+	var students []model.User
+	if err := r.db.Joins("JOIN student_departments ON users.id = student_departments.student_id").
+		Joins("JOIN departments ON student_departments.department_id = departments.id").
+		Where("departments.counselor_id = ?", userId).
 		Find(&students).Error; err != nil {
 		return nil, err
 	}

@@ -41,7 +41,7 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 	orgH := handler.NewOrgHandler(orgSvc)
 	userH := handler.NewUserHandler(userSvc)
 	notifH := handler.NewNotificationHandler(notifSvc)
-	leaveH := handler.NewLeaveHandler(leaveSvc)
+	leaveH := handler.NewLeaveHandler(leaveSvc, dingSvc)
 	//taskH := handler.NewTaskHandler(taskSvc)
 	openH := handler.NewOpenHandler(openSvc)
 	dingH := handler.NewDingHandler(dingSvc, userRepo)
@@ -70,6 +70,7 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 			protected.GET("/departments/mine/:deptId", orgH.ListDepartmentStudent) // 通过部门Id获取部门详情和学生信息
 			protected.GET("/leaves/pending", leaveH.ListPendingLeaves)             // 待审批请假
 			protected.POST("/leaves/:uuid/audit", leaveH.Audit)                    // 审批请假
+			protected.POST("/leaves/data", leaveH.LeaveData)                       // 请假数据统计
 
 			// 教师相关 (Teacher)
 			protected.POST("/classes", orgH.CreateClass)                   // 创建班级

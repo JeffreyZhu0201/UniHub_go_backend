@@ -9,11 +9,12 @@ import (
 )
 
 type LeaveHandler struct {
-	Service service.LeaveService
+	leaveService service.LeaveService
+	dingService  service.DingService
 }
 
-func NewLeaveHandler(s service.LeaveService) *LeaveHandler {
-	return &LeaveHandler{Service: s}
+func NewLeaveHandler(s service.LeaveService, d service.DingService) *LeaveHandler {
+	return &LeaveHandler{leaveService: s}
 }
 
 type ApplyLeaveRequest struct {
@@ -45,7 +46,7 @@ func (h *LeaveHandler) Apply(c *gin.Context) {
 		Reason:    req.Reason,
 	}
 
-	leave, err := h.Service.Apply(serviceReq)
+	leave, err := h.leaveService.Apply(serviceReq)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -72,7 +73,7 @@ func (h *LeaveHandler) Audit(c *gin.Context) {
 		Status:    req.Status,
 	}
 
-	if err := h.Service.Audit(serviceReq); err != nil {
+	if err := h.leaveService.Audit(serviceReq, h.dingService); err != nil {
 		status := http.StatusInternalServerError
 		if err.Error() == "无权限审批" || err.Error() == "无权审批该学生请假" {
 			status = http.StatusForbidden
@@ -91,7 +92,7 @@ func (h *LeaveHandler) ListPendingLeaves(c *gin.Context) {
 	userID := c.GetUint("userID")
 	roleID := c.GetUint("roleID")
 
-	leaves, err := h.Service.ListPendingLeaves(userID, roleID)
+	leaves, err := h.leaveService.ListPendingLeaves(userID, roleID)
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
@@ -104,11 +105,24 @@ func (h *LeaveHandler) ListPendingLeaves(c *gin.Context) {
 func (h *LeaveHandler) MyLeaves(c *gin.Context) {
 	userID := c.GetUint("userID")
 
-	leaves, err := h.Service.MyLeaves(userID)
+	leaves, err := h.leaveService.MyLeaves(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, leaves)
+}
+
+func (h *LeaveHandler) LeaveData(context *gin.Context) {
+	userId := context.GetUint("userID")
+
+	data, err := h.leaveService.LeaveData(userId)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "查询请假数据失败"})
+		return
+	}
+
+	context.JSON(http.StatusOK, data)
+
 }

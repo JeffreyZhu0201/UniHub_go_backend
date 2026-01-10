@@ -12,6 +12,7 @@ type LeaveRepository interface {
 	UpdateLeaveRequest(leave *model.LeaveRequest) error
 	ListPendingLeavesByStudentIDs(studentIDs []uint) ([]model.LeaveRequest, error) // For counselor to audit
 	ListLeavesByStudentID(studentID uint) ([]model.LeaveRequest, error)
+	ListLeavesWithStudentsByStudentsAndStatus(students interface{}, status string) ([]interface{}, interface{})
 }
 
 type leaveRepository struct {
@@ -48,4 +49,17 @@ func (r *leaveRepository) ListLeavesByStudentID(studentID uint) ([]model.LeaveRe
 	var leaves []model.LeaveRequest
 	err := r.db.Where("student_id = ?", studentID).Order("created_at desc").Find(&leaves).Error
 	return leaves, err
+}
+
+func (r *leaveRepository) ListLeavesWithStudentsByStudentsAndStatus(studentsIds interface{}, status string) ([]interface{}, interface{}) {
+	var leaves []interface{}
+	// 使用连接操作，需要获取学生信息
+	if err := r.db.Model(&model.LeaveRequest{}).
+		Select("leave_requests.*, users.id as student_id, users.name as student_name").
+		Joins("join users on leave_requests.student_id = users.id").
+		Where("leave_requests.student_id IN ? AND leave_requests.status = ?", studentsIds, status).
+		Scan(&leaves).Error; err != nil {
+		return nil, err
+	}
+	return leaves, nil
 }

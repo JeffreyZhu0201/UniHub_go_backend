@@ -158,6 +158,7 @@ type LeaveRequest struct {
 	Reason    string    `gorm:"size:255"`
 	Status    string    `gorm:"size:20;default:'pending'"` // pending, approved, rejected, active, completed, overdue
 	AuditorID *uint     `gorm:"index"`                     // 审批人(辅导员)
+	DingId    uint      `gorm:"index"`                     // 关联的打卡任务ID
 	AuditTime *time.Time
 	CreatedAt time.Time
 	UpdatedAt time.Time

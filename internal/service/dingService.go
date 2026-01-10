@@ -13,7 +13,7 @@ import (
 )
 
 type DingService interface {
-	CreateDing(req DTO.CreateDingRequest, launcherID uint, roleID uint) error
+	CreateDing(req DTO.CreateDingRequest, launcherID uint, roleID uint) (*uint, error)
 	ListAllMyDings(studentID uint) (map[string][]model.Ding, error)
 	ListMyCreatedDings(launcherID uint) ([]model.Ding, error)
 	ListMyCreatedDingsRecords(userId uint, dingID string) (interface{}, interface{})
@@ -36,7 +36,7 @@ func NewDingService(dingRepo repo.DingRepository, orgRepo repo.OrgRepository, us
 	}
 }
 
-func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ uint) error {
+func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ uint) (*uint, error) {
 	var studentIDs []uint
 
 	// Permission Check inside Service?
@@ -61,7 +61,7 @@ func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ u
 	}
 
 	if err != nil || len(studentIDs) == 0 {
-		return errors.New("目标学生不存在或发生错误")
+		return nil, errors.New("目标学生不存在或发生错误")
 	}
 
 	ding := model.Ding{
@@ -78,7 +78,7 @@ func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ u
 	}
 
 	if err := s.dingRepo.CreateDing(&ding); err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, studentID := range studentIDs {
@@ -89,7 +89,7 @@ func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ u
 			DingTime:  time.Now(),
 		}
 		if err := s.dingRepo.CreateDingStudent(&dingStudent); err != nil {
-			return err
+			return nil, err
 		}
 
 		notif := model.Notification{
@@ -107,7 +107,7 @@ func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ u
 			log.Printf("已向学生 %d 发送打卡任务通知", studentID)
 		}
 	}
-	return nil
+	return &ding.ID, nil
 }
 
 func (s *dingService) ListAllMyDings(studentID uint) (map[string][]model.Ding, error) {

@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"time"
+	"unihub/internal/DTO"
 	"unihub/internal/model"
 	"unihub/internal/repo"
 )
@@ -24,9 +25,10 @@ type AuditLeaveRequest struct {
 
 type LeaveService interface {
 	Apply(req ApplyLeaveRequest) (*model.LeaveRequest, error)
-	Audit(req AuditLeaveRequest) error
+	Audit(req AuditLeaveRequest, d DingService) error
 	ListPendingLeaves(counselorID, roleID uint) ([]model.LeaveRequest, error)
 	MyLeaves(studentID uint) ([]model.LeaveRequest, error)
+	LeaveData(userId uint) (interface{}, interface{})
 }
 
 type leaveService struct {
@@ -59,7 +61,7 @@ func (s *leaveService) Apply(req ApplyLeaveRequest) (*model.LeaveRequest, error)
 	return &leave, nil
 }
 
-func (s *leaveService) Audit(req AuditLeaveRequest) error {
+func (s *leaveService) Audit(req AuditLeaveRequest, dscv DingService) error {
 	if allowed, _ := s.userRepo.CheckPermission(req.RoleID, "leave:approve"); !allowed {
 		return errors.New("无权限审批")
 	}
@@ -100,19 +102,26 @@ func (s *leaveService) Audit(req AuditLeaveRequest) error {
 		return err
 	}
 
-	// Create "Sign In Task" if approved?
-	// Requirement: "请假成功后自动生成一个签到任务，规定时间段在请假截止时间前。"
 	if req.Status == "approved" {
-		// Implementation of creating auto sign-in task
-		// This requires TaskService or direct repo access.
-		// Since services shouldn't cyclically depend, we might use TaskRepo here or Event Bus.
-		// Or simpler: just do it here.
-		// "规定时间段在请假截止时间前" -> Deadline = leave.EndTime ?
-		// "Sign In Task" usually means strict location check.
-		// Or just a task for them to click "I'm back".
-		// TODO: Implement automatic task creation
+		dingEntity := DTO.CreateDingRequest{
+			StudentId:  leave.StudentID,
+			Title:      "返校签到",
+			LauncherId: req.AuditorID,
+			StartTime:  leave.EndTime.Add(-1 * time.Hour),
+			EndTime:    leave.EndTime,
+			Latitude:   200,
+			Longitude:  200,
+			Radius:     50,
+		}
+		dingId, err := dscv.CreateDing(dingEntity, req.AuditorID, req.RoleID)
+		if err != nil {
+			return err
+		}
+		leave.DingId = *dingId
+		if err := s.leaveRepo.UpdateLeaveRequest(leave); err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
@@ -144,4 +153,22 @@ func (s *leaveService) ListPendingLeaves(counselorID, roleID uint) ([]model.Leav
 
 func (s *leaveService) MyLeaves(studentID uint) ([]model.LeaveRequest, error) {
 	return s.leaveRepo.ListLeavesByStudentID(studentID)
+}
+
+func (s *leaveService) LeaveData(userId uint) (interface{}, interface{}) {
+	//approvedCount, _ := s.leaveRepo.CountLeavesByStatus("approved")
+	// get all my students
+	students, _ := s.orgRepo.ListStudentsByCounselorID(userId)
+	// select id
+	var studentIDs []uint
+	for _, student := range students {
+		studentIDs = append(studentIDs, student.ID)
+	}
+	// find leaves by student IDs and status
+	result := make(map[string][]interface{})
+	for _, status := range []string{"approved", "pending", "rejected"} {
+		leavesDetail, _ := s.leaveRepo.ListLeavesWithStudentsByStudentsAndStatus(students, status)
+		result[status] = leavesDetail
+	}
+	return result, nil
 }
