@@ -14,7 +14,7 @@ type LeaveRepository interface {
 	ListLeavesByStudentID(studentID uint) ([]model.LeaveRequest, error)
 	ListLeavesWithStudentsByStudentsAndStatus(studentIds []uint, status string) ([]interface{}, interface{})
 	ListApprovedLeavesWithStudentsByStudents(students []model.User) (interface{}, interface{})
-	ListLeavesWithStudentsByStudentsByDingStatusBeforeEnd(students []model.User) (interface{}, interface{})
+	ListLeavesWithStudentsByStudentsByDingStatusBeforeEnd(students []model.User, ding_status string) (interface{}, interface{})
 	ListLeavesWithStudentsByStudentsAfterEnd(students []model.User) (interface{}, interface{})
 }
 
@@ -94,7 +94,7 @@ func (r *leaveRepository) ListApprovedLeavesWithStudentsByStudents(students []mo
 	return leaves, nil
 }
 
-func (r *leaveRepository) ListLeavesWithStudentsByStudentsByDingStatusBeforeEnd(students []model.User) (interface{}, interface{}) {
+func (r *leaveRepository) ListLeavesWithStudentsByStudentsByDingStatusBeforeEnd(students []model.User, ding_status string) (interface{}, interface{}) {
 	var results []map[string]interface{}
 	var studentIDs []uint
 	for _, student := range students {
@@ -105,7 +105,7 @@ func (r *leaveRepository) ListLeavesWithStudentsByStudentsByDingStatusBeforeEnd(
 		Select("leave_requests.*, users.id as student_id, users.nickname as student_name,ding_students.ding_time").
 		Joins("join users on leave_requests.student_id = users.id").
 		Joins("join ding_students on leave_requests.ding_id = ding_students.ding_id").
-		Where("leave_requests.student_id IN ? AND leave_requests.status = ? AND ding_students.status = ? AND leave_requests.end_time > ding_students.ding_time", studentIDs, "approved", "complete").
+		Where("leave_requests.student_id IN ? AND leave_requests.status = ? AND ding_students.status = ? AND leave_requests.end_time > ding_students.ding_time", studentIDs, "approved", ding_status).
 		Scan(&results).Error; err != nil {
 		return nil, err
 	}

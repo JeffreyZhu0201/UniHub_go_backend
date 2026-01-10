@@ -185,10 +185,13 @@ func (s *leaveService) LeaveBackInfo(userId uint) (interface{}, interface{}) {
 	// find leaves by student IDs and status
 	result := make(map[string]interface{})
 	allApproved, _ := s.leaveRepo.ListApprovedLeavesWithStudentsByStudents(students)
-	returned, _ := s.leaveRepo.ListLeavesWithStudentsByStudentsByDingStatusBeforeEnd(students)
+	returned, _ := s.leaveRepo.ListLeavesWithStudentsByStudentsByDingStatusBeforeEnd(students, "complete")
 	lateReturned, _ := s.leaveRepo.ListLeavesWithStudentsByStudentsAfterEnd(students)
+	leaving, _ := s.leaveRepo.ListLeavesWithStudentsByStudentsByDingStatusBeforeEnd(students, "pending")
+
 	result["approved"] = allApproved
 	result["returned"] = returned
 	result["late_returned"] = lateReturned
+	result["leaving"] = leaving
 	return result, nil
 }
