@@ -14,7 +14,10 @@ type LeaveHandler struct {
 }
 
 func NewLeaveHandler(s service.LeaveService, d service.DingService) *LeaveHandler {
-	return &LeaveHandler{leaveService: s}
+	return &LeaveHandler{
+		leaveService: s,
+		dingService:  d,
+	}
 }
 
 type ApplyLeaveRequest struct {
@@ -125,4 +128,14 @@ func (h *LeaveHandler) LeaveData(context *gin.Context) {
 
 	context.JSON(http.StatusOK, data)
 
+}
+
+func (h *LeaveHandler) LeaveBackInfo(context *gin.Context) {
+	userId := context.GetUint("userID")
+	data, err := h.leaveService.LeaveBackInfo(userId)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "查询未归数据失败"})
+		return
+	}
+	context.JSON(http.StatusOK, data)
 }

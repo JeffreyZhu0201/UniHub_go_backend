@@ -42,7 +42,7 @@ func (d *DingHandler) Create(c *gin.Context) {
 	}
 	req.LauncherId = userID // 设置发布者为当前用户
 
-	if err := d.Service.CreateDing(req, userID, roleID); err != nil {
+	if _, err := d.Service.CreateDing(req, userID, roleID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建打卡任务失败: " + err.Error()})
 		return
 	}
@@ -97,4 +97,16 @@ func (d *DingHandler) ExportMyCreatedDingRecords(context *gin.Context) {
 		return
 	}
 	context.JSON(http.StatusOK, gin.H{"message": "导出所选打卡记录成功", "fileRelativePath": filePath})
+}
+
+func (d *DingHandler) Ding(c *gin.Context) { // 打卡
+	dingId := c.Param("dingId")
+	userID := c.GetUint("userID")
+
+	dingDetail, err := d.Service.Ding(dingId, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取打卡任务详情失败"})
+		return
+	}
+	c.JSON(http.StatusOK, dingDetail)
 }

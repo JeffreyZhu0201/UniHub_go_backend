@@ -29,6 +29,7 @@ type LeaveService interface {
 	ListPendingLeaves(counselorID, roleID uint) ([]model.LeaveRequest, error)
 	MyLeaves(studentID uint) ([]model.LeaveRequest, error)
 	LeaveData(userId uint) (interface{}, interface{})
+	LeaveBackInfo(userId uint) (interface{}, interface{})
 }
 
 type leaveService struct {
@@ -117,7 +118,7 @@ func (s *leaveService) Audit(req AuditLeaveRequest, dscv DingService) error {
 		if err != nil {
 			return err
 		}
-		leave.DingId = *dingId
+		leave.DingId = dingId
 		if err := s.leaveRepo.UpdateLeaveRequest(leave); err != nil {
 			return err
 		}
@@ -167,8 +168,27 @@ func (s *leaveService) LeaveData(userId uint) (interface{}, interface{}) {
 	// find leaves by student IDs and status
 	result := make(map[string][]interface{})
 	for _, status := range []string{"approved", "pending", "rejected"} {
-		leavesDetail, _ := s.leaveRepo.ListLeavesWithStudentsByStudentsAndStatus(students, status)
+		leavesDetail, _ := s.leaveRepo.ListLeavesWithStudentsByStudentsAndStatus(studentIDs, status)
 		result[status] = leavesDetail
 	}
+	return result, nil
+}
+
+func (s *leaveService) LeaveBackInfo(userId uint) (interface{}, interface{}) {
+	// get all my students
+	students, _ := s.orgRepo.ListStudentsByCounselorID(userId)
+	// select id
+	var studentIDs []uint
+	for _, student := range students {
+		studentIDs = append(studentIDs, student.ID)
+	}
+	// find leaves by student IDs and status
+	result := make(map[string]interface{})
+	allApproved, _ := s.leaveRepo.ListApprovedLeavesWithStudentsByStudents(students)
+	returned, _ := s.leaveRepo.ListLeavesWithStudentsByStudentsByDingStatusBeforeEnd(students)
+	lateReturned, _ := s.leaveRepo.ListLeavesWithStudentsByStudentsAfterEnd(students)
+	result["approved"] = allApproved
+	result["returned"] = returned
+	result["late_returned"] = lateReturned
 	return result, nil
 }

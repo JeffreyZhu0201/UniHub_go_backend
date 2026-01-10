@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"unihub/internal/service"
+	"unihub/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,4 +43,21 @@ func (h *UserHandler) ListStudents(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, students)
+}
+
+func (h *UserHandler) ExportListOfObjectsUpload(context *gin.Context) {
+
+	// bind query parameters
+	var queryParams struct {
+		data []interface{}
+	}
+	if context.ShouldBindJSON(&queryParams) != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "参数绑定失败"})
+	}
+	filePath, err := utils.ExportToExcel(queryParams.data, "导出")
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	context.JSON(http.StatusOK, gin.H{"filePath": filePath})
 }

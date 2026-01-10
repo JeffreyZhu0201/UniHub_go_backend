@@ -71,6 +71,7 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 			protected.GET("/leaves/pending", leaveH.ListPendingLeaves)             // 待审批请假
 			protected.POST("/leaves/:uuid/audit", leaveH.Audit)                    // 审批请假
 			protected.POST("/leaves/data", leaveH.LeaveData)                       // 请假数据统计
+			protected.POST("/leaves/leavebackinfo", leaveH.LeaveBackInfo)          // 未归统计
 
 			// 教师相关 (Teacher)
 			protected.POST("/classes", orgH.CreateClass)                   // 创建班级
@@ -99,6 +100,9 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 			protected.GET("/dings/mycreateddings", dingH.ListMyCreatedDings)
 			protected.GET("/dings/mycreateddingsrecords/:dingId", dingH.ListMyCreatedDingsRecords)
 			protected.GET("/dings/mycreateddingsrecordsexport/:dingId", dingH.ExportMyCreatedDingRecords) // by ID
+
+			// 工具
+			protected.POST("/exportListOfObjectsUploaded", userH.ExportListOfObjectsUpload) // 上传导出列表文件
 		}
 
 		// 开放平台注册 (Open Platform Registration)

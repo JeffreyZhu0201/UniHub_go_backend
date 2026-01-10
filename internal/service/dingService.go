@@ -13,11 +13,12 @@ import (
 )
 
 type DingService interface {
-	CreateDing(req DTO.CreateDingRequest, launcherID uint, roleID uint) (*uint, error)
+	CreateDing(req DTO.CreateDingRequest, launcherID uint, roleID uint) (uint, error)
 	ListAllMyDings(studentID uint) (map[string][]model.Ding, error)
 	ListMyCreatedDings(launcherID uint) ([]model.Ding, error)
 	ListMyCreatedDingsRecords(userId uint, dingID string) (interface{}, interface{})
 	ExportMyCreatedDingRecords(dingId string) (interface{}, interface{})
+	Ding(userId string, dingId uint) (interface{}, interface{})
 }
 
 type dingService struct {
@@ -36,14 +37,8 @@ func NewDingService(dingRepo repo.DingRepository, orgRepo repo.OrgRepository, us
 	}
 }
 
-func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ uint) (*uint, error) {
+func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ uint) (uint, error) {
 	var studentIDs []uint
-
-	// Permission Check inside Service?
-	// The handler calls this after checking permission "ding:create" if needed.
-	// But let's assume handler does the check or we inject it here.
-	// The original handler did `RequriePermission`. We can move it here if we want strict service layer logic.
-	// For now, let's stick to logic implementation.
 
 	var err error
 	if req.DeptId != 0 {
@@ -61,7 +56,7 @@ func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ u
 	}
 
 	if err != nil || len(studentIDs) == 0 {
-		return nil, errors.New("目标学生不存在或发生错误")
+		return 0, errors.New("目标学生不存在或发生错误")
 	}
 
 	ding := model.Ding{
@@ -78,7 +73,7 @@ func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ u
 	}
 
 	if err := s.dingRepo.CreateDing(&ding); err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	for _, studentID := range studentIDs {
@@ -89,7 +84,7 @@ func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ u
 			DingTime:  time.Now(),
 		}
 		if err := s.dingRepo.CreateDingStudent(&dingStudent); err != nil {
-			return nil, err
+			return 0, err
 		}
 
 		notif := model.Notification{
@@ -107,7 +102,7 @@ func (s *dingService) CreateDing(req DTO.CreateDingRequest, launcherID uint, _ u
 			log.Printf("已向学生 %d 发送打卡任务通知", studentID)
 		}
 	}
-	return &ding.ID, nil
+	return ding.ID, nil
 }
 
 func (s *dingService) ListAllMyDings(studentID uint) (map[string][]model.Ding, error) {
@@ -148,4 +143,13 @@ func (s *dingService) ExportMyCreatedDingRecords(dingId string) (interface{}, in
 		return nil, err
 	}
 	return exportedFilePath, nil
+}
+
+func (s *dingService) Ding(userId string, dingId uint) (interface{}, interface{}) {
+	// 打卡逻辑
+	dingStudent, err := s.dingRepo.UpdateDingStudent(dingId, userId)
+	if err != nil {
+		return nil, err
+	}
+	return dingStudent, nil
 }
