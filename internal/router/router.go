@@ -13,6 +13,7 @@ import (
 
 // Register registers all routes.
 func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
+	r.Use(middleware.CORSMiddleware())
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
