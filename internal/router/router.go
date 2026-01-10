@@ -70,7 +70,7 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 			protected.GET("/departments/mine", orgH.ListMyDepartments)             // 我创建的部门
 			protected.GET("/departments/mine/:deptId", orgH.ListDepartmentStudent) // 通过部门Id获取部门详情和学生信息
 			protected.GET("/leaves/pending", leaveH.ListPendingLeaves)             // 待审批请假
-			protected.POST("/leaves/:uuid/audit", leaveH.Audit)                    // 审批请假
+			protected.POST("/leaves/audit", leaveH.Audit)                          // 审批请假 (Changed from /leaves/:uuid/audit)
 			protected.POST("/leaves/data", leaveH.LeaveData)                       // 请假数据统计
 			protected.POST("/leaves/leavebackinfo", leaveH.LeaveBackInfo)          // 未归统计
 

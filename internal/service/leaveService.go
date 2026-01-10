@@ -26,7 +26,7 @@ type AuditLeaveRequest struct {
 type LeaveService interface {
 	Apply(req ApplyLeaveRequest) (*model.LeaveRequest, error)
 	Audit(req AuditLeaveRequest, d DingService) error
-	ListPendingLeaves(counselorID, roleID uint) ([]model.LeaveRequest, error)
+	ListPendingLeaves(counselorID, roleID uint) ([]interface{}, error) // Changed return type
 	MyLeaves(studentID uint) ([]model.LeaveRequest, error)
 	LeaveData(userId uint) (interface{}, interface{})
 	LeaveBackInfo(userId uint) (interface{}, interface{})
@@ -126,7 +126,7 @@ func (s *leaveService) Audit(req AuditLeaveRequest, dscv DingService) error {
 	return nil
 }
 
-func (s *leaveService) ListPendingLeaves(counselorID, roleID uint) ([]model.LeaveRequest, error) {
+func (s *leaveService) ListPendingLeaves(counselorID, roleID uint) ([]interface{}, error) {
 	if allowed, _ := s.userRepo.CheckPermission(roleID, "leave:approve"); !allowed {
 		return nil, errors.New("无权限查看待审批请假")
 	}
@@ -146,10 +146,21 @@ func (s *leaveService) ListPendingLeaves(counselorID, roleID uint) ([]model.Leav
 	}
 
 	if len(allStudentIDs) == 0 {
-		return []model.LeaveRequest{}, nil
+		return []interface{}{}, nil
 	}
 
-	return s.leaveRepo.ListPendingLeavesByStudentIDs(allStudentIDs)
+	// Use the Repo method that joins with Users table to get names
+	result, errInt := s.leaveRepo.ListLeavesWithStudentsByStudentsAndStatus(allStudentIDs, "pending")
+	
+	// Handle the unusual interface{} error return from repo
+	if errInt != nil {
+		if e, ok := errInt.(error); ok {
+			return nil, e
+		}
+		return nil, errors.New("unknown error fetching leaves")
+	}
+	
+	return result, nil
 }
 
 func (s *leaveService) MyLeaves(studentID uint) ([]model.LeaveRequest, error) {
