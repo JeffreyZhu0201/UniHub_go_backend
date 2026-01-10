@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"log"
+	"strconv"
 	"unihub/internal/model"
 
 	"gorm.io/gorm"
@@ -13,6 +15,7 @@ type DingRepository interface {
 	GetDingsByLauncherID(launcherID uint) ([]model.Ding, error)
 	GetDingRecordsByDingID(dingId string) (interface{}, interface{})
 	UpdateDingStudent(userId uint, dingId string) (interface{}, interface{})
+	GetDingStats(launcherID uint) (int64, int64, error)
 }
 
 type dingRepository struct {
@@ -50,18 +53,26 @@ func (r *dingRepository) GetDingsByStudentIDAndStatus(studentID uint, status str
 
 func (r *dingRepository) GetDingsByLauncherID(launcherID uint) ([]model.Ding, error) {
 	var dings []model.Ding
-	if err := r.db.Where("launcher_id = ?", launcherID).Find(&dings).Error; err != nil {
+	if err := r.db.Where("launcher_id = ?", launcherID).Order("created_at desc").Find(&dings).Error; err != nil {
 		return nil, err
 	}
 	return dings, nil
 }
 
+// GetDingRecordsByDingID modified to include student name and no
 func (r *dingRepository) GetDingRecordsByDingID(dingId string) (interface{}, interface{}) {
-	var dingRecords []model.DingStudent
-	if err := r.db.Where("ding_id = ?", dingId).Find(&dingRecords).Error; err != nil {
+	var results []map[string]interface{}
+	// Join ding_students with users to get student details
+	err := r.db.Table("ding_students").
+		Select("ding_students.*, users.nickname as student_name, users.student_no").
+		Joins("JOIN users ON ding_students.student_id = users.id").
+		Where("ding_students.ding_id = ?", dingId).
+		Scan(&results).Error
+
+	if err != nil {
 		return nil, err
 	}
-	return dingRecords, nil
+	return results, nil
 }
 
 func (r *dingRepository) UpdateDingStudent(userId uint, dingId string) (interface{}, interface{}) {
@@ -74,4 +85,29 @@ func (r *dingRepository) UpdateDingStudent(userId uint, dingId string) (interfac
 		return nil, err
 	}
 	return dingStudent, nil
+}
+
+func (r *dingRepository) GetDingStats(launcherID uint) (int64, int64, error) {
+	var total int64
+	var checked int64
+
+	// 1. 计算理论总人数 (所有非这类任务的学生关联记录)
+	// 假设 ding_students 表名为 ding_students, dings 表名为 dings
+	// 过滤 Type != 'leave_return'
+	if err := r.db.Table("ding_students").
+		Joins("JOIN dings ON dings.id = ding_students.ding_id").
+		Where("dings.launcher_id = ? AND dings.title != ?", launcherID, "返校签到").
+		Count(&total).Error; err != nil {
+		return 0, 0, err
+	}
+
+	// 2. 计算已打卡人数 (Status = true/1)
+	if err := r.db.Table("ding_students").
+		Joins("JOIN dings ON dings.id = ding_students.ding_id").
+		Where("dings.launcher_id = ? AND dings.title != ? AND ding_students.status = ?", launcherID, "返校签到", "complete").
+		Count(&checked).Error; err != nil {
+		return 0, 0, err
+	}
+	log.Printf(strconv.FormatInt(checked, 10), total)
+	return total, checked, nil
 }

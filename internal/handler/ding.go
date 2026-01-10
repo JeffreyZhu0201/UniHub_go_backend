@@ -87,6 +87,18 @@ func (d *DingHandler) ListMyCreatedDingsRecords(context *gin.Context) {
 	context.JSON(http.StatusOK, gin.H{"records": studentRecordByDing})
 }
 
+// GetDingStats 获取打卡统计 (理论总数, 已打卡, 未打卡)
+func (d *DingHandler) GetDingStats(c *gin.Context) {
+	userID := c.GetUint("userID")
+	// 辅导员或教师都可以看，基于 userID 过滤
+	stats, err := d.Service.GetDingStats(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取统计数据失败"})
+		return
+	}
+	c.JSON(http.StatusOK, stats)
+}
+
 func (d *DingHandler) ExportMyCreatedDingRecords(context *gin.Context) {
 	// 导出某一次打卡记录
 	//userId := context.GetUint("userID")

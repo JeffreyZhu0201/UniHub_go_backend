@@ -102,6 +102,9 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 			protected.GET("/dings/mycreateddingsrecords/:dingId", dingH.ListMyCreatedDingsRecords)
 			protected.GET("/dings/mycreateddingsrecordsexport/:dingId", dingH.ExportMyCreatedDingRecords) // by ID
 
+			// 新增统计接口
+			protected.GET("/dings/stats", dingH.GetDingStats)
+
 			// 工具
 			protected.POST("/exportListOfObjectsUploaded", userH.ExportListOfObjectsUpload) // 上传导出列表文件
 		}

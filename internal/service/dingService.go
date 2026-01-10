@@ -19,6 +19,7 @@ type DingService interface {
 	ListMyCreatedDingsRecords(userId uint, dingID string) (interface{}, interface{})
 	ExportMyCreatedDingRecords(dingId string) (interface{}, interface{})
 	Ding(userId string, dingId uint) (interface{}, interface{})
+	GetDingStats(launcherID uint) (map[string]int64, error)
 }
 
 type dingService struct {
@@ -152,4 +153,16 @@ func (s *dingService) Ding(userId string, dingId uint) (interface{}, interface{}
 		return nil, err
 	}
 	return dingStudent, nil
+}
+
+func (s *dingService) GetDingStats(launcherID uint) (map[string]int64, error) {
+	total, checked, err := s.dingRepo.GetDingStats(launcherID)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]int64{
+		"total_count":   total,
+		"checked_count": checked,
+		"missed_count":  total - checked,
+	}, nil
 }

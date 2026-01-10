@@ -105,12 +105,13 @@ func (s *leaveService) Audit(req AuditLeaveRequest, dscv DingService) error {
 
 	if req.Status == "approved" {
 		dingEntity := DTO.CreateDingRequest{
-			StudentId:  leave.StudentID,
-			Title:      "返校签到",
+			StudentId: leave.StudentID,
+			Title:     "返校签到",
+			//Type:       "leave_return", // Add explicit type to distinguish from normal dings
 			LauncherId: req.AuditorID,
 			StartTime:  leave.EndTime.Add(-1 * time.Hour),
 			EndTime:    leave.EndTime,
-			Latitude:   200,
+			Latitude:   200, // Default values as per logic
 			Longitude:  200,
 			Radius:     50,
 		}
@@ -151,7 +152,7 @@ func (s *leaveService) ListPendingLeaves(counselorID, roleID uint) ([]interface{
 
 	// Use the Repo method that joins with Users table to get names
 	result, errInt := s.leaveRepo.ListLeavesWithStudentsByStudentsAndStatus(allStudentIDs, "pending")
-	
+
 	// Handle the unusual interface{} error return from repo
 	if errInt != nil {
 		if e, ok := errInt.(error); ok {
@@ -159,7 +160,7 @@ func (s *leaveService) ListPendingLeaves(counselorID, roleID uint) ([]interface{
 		}
 		return nil, errors.New("unknown error fetching leaves")
 	}
-	
+
 	return result, nil
 }
 
