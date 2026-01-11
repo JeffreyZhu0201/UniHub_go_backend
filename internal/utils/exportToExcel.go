@@ -35,56 +35,96 @@ func ExportToExcel(data interface{}, filePrefix string) (string, error) {
 		// handle potential error or ignore if it just says it exists
 	}
 
-	if sliceVal.Len() >= 0 { // Allow empty slice to generate headers if type is known
-		// 获取元素类型
+	if sliceVal.Len() > 0 {
+		// 检查第一个元素以确定处理逻辑 (支持 Struct 和 Map)
+		firstVal := sliceVal.Index(0)
+		for firstVal.Kind() == reflect.Interface || firstVal.Kind() == reflect.Ptr {
+			firstVal = firstVal.Elem()
+		}
+
+		if firstVal.Kind() == reflect.Map {
+			// --- Map 处理逻辑 ---
+			keys := firstVal.MapKeys()
+			// 写入表头
+			for i, key := range keys {
+				cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+				_ = f.SetCellValue(sheetName, cell, key.String())
+			}
+			// 写入数据
+			for i := 0; i < sliceVal.Len(); i++ {
+				item := sliceVal.Index(i)
+				for item.Kind() == reflect.Interface || item.Kind() == reflect.Ptr {
+					item = item.Elem()
+				}
+				for j, key := range keys {
+					val := item.MapIndex(key)
+					if val.IsValid() {
+						cell, _ := excelize.CoordinatesToCellName(j+1, i+2)
+						// 格式化时间
+						if t, ok := val.Interface().(time.Time); ok {
+							_ = f.SetCellValue(sheetName, cell, t.Format("2006-01-02 15:04:05"))
+						} else {
+							_ = f.SetCellValue(sheetName, cell, val.Interface())
+						}
+					}
+				}
+			}
+		} else if firstVal.Kind() == reflect.Struct {
+			// --- Struct 处理逻辑 (反射运行时类型) ---
+			elemType := firstVal.Type()
+			numFields := elemType.NumField()
+
+			// 写入表头
+			for i := 0; i < numFields; i++ {
+				field := elemType.Field(i)
+				header := field.Name
+				if tag := field.Tag.Get("json"); tag != "" && tag != "-" {
+					header = tag
+				} else if tag := field.Tag.Get("gorm"); tag != "" && tag != "-" {
+					header = field.Name
+				}
+				cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+				_ = f.SetCellValue(sheetName, cell, header)
+			}
+
+			// 写入数据
+			for i := 0; i < sliceVal.Len(); i++ {
+				item := sliceVal.Index(i)
+				for item.Kind() == reflect.Interface || item.Kind() == reflect.Ptr {
+					item = item.Elem()
+				}
+				for j := 0; j < numFields; j++ {
+					val := item.Field(j).Interface()
+					if t, ok := val.(time.Time); ok {
+						val = t.Format("2006-01-02 15:04:05")
+					}
+					cell, _ := excelize.CoordinatesToCellName(j+1, i+2)
+					_ = f.SetCellValue(sheetName, cell, val)
+				}
+			}
+		} else {
+			return "", fmt.Errorf("unsupported element type: %v", firstVal.Kind())
+		}
+
+	} else {
+		// 尝试处理空 Slice (仅当明确是 Struct Slice 时)
 		elemType := sliceVal.Type().Elem()
 		if elemType.Kind() == reflect.Ptr {
 			elemType = elemType.Elem()
 		}
-
-		if elemType.Kind() != reflect.Struct {
-			// If not a struct (e.g. slice of ints), we can't easily make headers.
-			// Just skipping logic or return error.
-			// Assuming usage for DTO/DB Models.
-			return "", fmt.Errorf("elements must be structs")
-		}
-
-		// 写入表头
-		numFields := elemType.NumField()
-		for i := 0; i < numFields; i++ {
-			field := elemType.Field(i)
-			header := field.Name
-			// 优先使用 json tag 作为表头
-			if tag := field.Tag.Get("json"); tag != "" && tag != "-" {
-				header = tag
-			} else if tag := field.Tag.Get("gorm"); tag != "" && tag != "-" {
-				// 简单的尝试获取 gorm column name, 实际解析比较复杂，这里仅简单 fallback
-				header = field.Name
-			}
-
-			cell, _ := excelize.CoordinatesToCellName(i+1, 1)
-			_ = f.SetCellValue(sheetName, cell, header)
-		}
-
-		// 写入数据
-		for i := 0; i < sliceVal.Len(); i++ {
-			item := sliceVal.Index(i)
-			if item.Kind() == reflect.Ptr {
-				item = item.Elem()
-			}
-			for j := 0; j < numFields; j++ {
-				val := item.Field(j).Interface()
-
-				// 处理特定类型格式化 (如 Time)
-				if t, ok := val.(time.Time); ok {
-					val = t.Format("2006-01-02 15:04:05")
+		if elemType.Kind() == reflect.Struct {
+			numFields := elemType.NumField()
+			for i := 0; i < numFields; i++ {
+				field := elemType.Field(i)
+				header := field.Name
+				if tag := field.Tag.Get("json"); tag != "" && tag != "-" {
+					header = tag
 				}
-				// GORM Model 中的 DeletedAt, CreatedAt 等
-
-				cell, _ := excelize.CoordinatesToCellName(j+1, i+2)
-				_ = f.SetCellValue(sheetName, cell, val)
+				cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+				_ = f.SetCellValue(sheetName, cell, header)
 			}
 		}
+		// 如果是空的 []interface{}，无法确定表头，生成空文件
 	}
 
 	f.SetActiveSheet(index)

@@ -60,12 +60,13 @@ func (h *UserHandler) ExportListOfObjectsUpload(context *gin.Context) {
 
 	// bind query parameters
 	var queryParams struct {
-		data []interface{}
+		Data []interface{} `json:"data"`
 	}
-	if context.ShouldBindJSON(&queryParams) != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "参数绑定失败"})
+	if err := context.ShouldBindJSON(&queryParams); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "参数绑定失败: " + err.Error()})
+		return
 	}
-	filePath, err := utils.ExportToExcel(queryParams.data, "导出")
+	filePath, err := utils.ExportToExcel(queryParams.Data, "导出")
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
