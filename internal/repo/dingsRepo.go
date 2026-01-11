@@ -14,7 +14,7 @@ type DingRepository interface {
 	GetDingsByStudentIDAndStatus(studentID uint, status string) ([]model.Ding, error)
 	GetDingsByLauncherID(launcherID uint) ([]model.Ding, error)
 	GetDingRecordsByDingID(dingId string) (interface{}, interface{})
-	UpdateDingStudent(userId uint, dingId string) (interface{}, interface{})
+	UpdateDingStudent(dingId string, userId uint) (interface{}, interface{})
 	GetDingStats(launcherID uint) (int64, int64, error)
 }
 
@@ -75,7 +75,7 @@ func (r *dingRepository) GetDingRecordsByDingID(dingId string) (interface{}, int
 	return results, nil
 }
 
-func (r *dingRepository) UpdateDingStudent(userId uint, dingId string) (interface{}, interface{}) {
+func (r *dingRepository) UpdateDingStudent(dingId string, userId uint) (interface{}, interface{}) {
 	var dingStudent model.DingStudent
 	if err := r.db.Where("ding_id = ? AND student_id = ?", dingId, userId).First(&dingStudent).Error; err != nil {
 		return nil, err

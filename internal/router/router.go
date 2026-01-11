@@ -98,6 +98,7 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 
 			// 打卡任务 (Ding Tasks)
 			protected.POST("/dings/createdings", dingH.Create)
+			protected.POST("/dings/:dingId", dingH.Ding) // 新增路由：学生打卡
 			protected.GET("/dings/mydings", dingH.ListMyDings)
 			protected.GET("/dings/mycreateddings", dingH.ListMyCreatedDings)
 			protected.GET("/dings/mycreateddingsrecords/:dingId", dingH.ListMyCreatedDingsRecords)

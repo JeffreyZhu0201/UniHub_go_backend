@@ -18,7 +18,7 @@ type DingService interface {
 	ListMyCreatedDings(launcherID uint) ([]model.Ding, error)
 	ListMyCreatedDingsRecords(userId uint, dingID string) (interface{}, interface{})
 	ExportMyCreatedDingRecords(dingId string) (interface{}, interface{})
-	Ding(userId string, dingId uint) (interface{}, interface{})
+	Ding(dingIdStr string, userIdInt uint) (interface{}, interface{})
 	GetDingStats(launcherID uint) (map[string]int64, error)
 }
 
@@ -146,9 +146,15 @@ func (s *dingService) ExportMyCreatedDingRecords(dingId string) (interface{}, in
 	return exportedFilePath, nil
 }
 
-func (s *dingService) Ding(userId string, dingId uint) (interface{}, interface{}) {
+func (s *dingService) Ding(dingIdStr string, userIdInt uint) (interface{}, interface{}) {
 	// 打卡逻辑
-	dingStudent, err := s.dingRepo.UpdateDingStudent(dingId, userId)
+	// Map userIdInt to string if repo expects string, or use uint if repo adjusted.
+	// Assuming repo expects uint for userId, but string for dingId if it's from context.Param.
+	// But previous signature was (userId string, dingId uint). The Handler calls it as Ding(dingId, userID) where dingId is string, userID is uint.
+
+	// Convert types to match repo expectations or fix repo.
+	// Let's implement logic with correct types.
+	dingStudent, err := s.dingRepo.UpdateDingStudent(dingIdStr, userIdInt)
 	if err != nil {
 		return nil, err
 	}
