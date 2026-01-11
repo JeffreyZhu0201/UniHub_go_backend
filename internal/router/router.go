@@ -62,7 +62,8 @@ func Register(r *gin.Engine, cfg *config.Config, db *gorm.DB) {
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware(cfg))
 		{
-			protected.GET("/user/profile", userH.GetProfile) // 获取用户信息
+			protected.GET("/user/profile", userH.GetProfile)  // 获取用户信息
+			protected.GET("/user/org_info", userH.GetOrgInfo) // 新增：获取用户组织详细信息
 
 			// 组织管理 (Org Management)
 			// 辅导员相关 (Counselor)

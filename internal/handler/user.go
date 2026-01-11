@@ -27,6 +27,17 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// GetOrgInfo 获取用户组织详细信息
+func (h *UserHandler) GetOrgInfo(c *gin.Context) {
+	userID := c.GetUint("userID")
+	data, err := h.Service.GetUserOrgInfo(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取组织信息失败"})
+		return
+	}
+	c.JSON(http.StatusOK, data)
+}
+
 // ListStudents 列出自己管理的部门或班级的学生
 func (h *UserHandler) ListStudents(c *gin.Context) {
 	userID := c.GetUint("userID")

@@ -24,6 +24,8 @@ type OrgRepository interface {
 	GetStudentIDsByClassID(classID uint) ([]uint, error)
 	GetStudentDepartmentID(studentID uint) (uint, error)
 	GetStudentClassIDs(studentID uint) ([]uint, error)
+	ListClassesByStudentID(studentID uint) ([]model.Class, error) // 新增接口方法
+	GetDepartmentByID(deptID uint) (*model.Department, error)     // Added GetDepartmentByID
 	GetClassDetailsByID(id string) (interface{}, interface{})
 	ListStudentsByClassID(id string) (interface{}, interface{})
 	GetDepartmentDetailsByID(deptId string) (interface{}, interface{})
@@ -158,6 +160,21 @@ func (r *orgRepository) GetStudentClassIDs(studentID uint) ([]uint, error) {
 	var classIDs []uint
 	err := r.db.Model(&model.StudentClass{}).Where("student_id = ?", studentID).Pluck("class_id", &classIDs).Error
 	return classIDs, err
+}
+
+// 新增实现：获取学生加入的所有班级详细信息
+func (r *orgRepository) ListClassesByStudentID(studentID uint) ([]model.Class, error) {
+	var classes []model.Class
+	err := r.db.Joins("JOIN student_classes ON classes.id = student_classes.class_id").
+		Where("student_classes.student_id = ?", studentID).
+		Find(&classes).Error
+	return classes, err
+}
+
+func (r *orgRepository) GetDepartmentByID(deptID uint) (*model.Department, error) {
+	var dept model.Department
+	err := r.db.First(&dept, deptID).Error
+	return &dept, err
 }
 
 func (r *orgRepository) GetClassDetailsByID(classId string) (interface{}, interface{}) {

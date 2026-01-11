@@ -7,7 +7,10 @@ import (
 )
 
 type UserService interface {
+	// Register(req RegisterRequest) (*model.User, error)
+	// Login(req LoginRequest) (string, *model.User, error)
 	GetProfile(userID uint) (*model.User, error)
+	GetUserOrgInfo(userID uint) (map[string]interface{}, error) // 新增接口方法
 	ListStudents(userID, roleID uint) ([]model.User, error)
 }
 
@@ -30,6 +33,34 @@ func (s *userService) GetProfile(userID uint) (*model.User, error) {
 	}
 	user.Password = ""
 	return user, nil
+}
+
+// 新增实现：获取用户组织信息
+func (s *userService) GetUserOrgInfo(userID uint) (map[string]interface{}, error) {
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var classes []model.Class
+	// 只有学生角色才去查询加入的班级
+	if user.RoleID != 0 { // 假设 RoleID 存在，简单判断，严谨可判断 Role Key
+		// 这里简单处理，查询该用户作为学生加入的班级
+		classes, _ = s.orgRepo.ListClassesByStudentID(userID)
+	}
+
+	var dept *model.Department
+	if user.DepartmentID != 0 {
+		dept, _ = s.orgRepo.GetDepartmentByID(user.DepartmentID)
+	}
+
+	// 组装返回数据
+	result := map[string]interface{}{
+		"department": dept,
+		"classes":    classes,
+	}
+	return result, nil
+
 }
 
 func (s *userService) ListStudents(userID, roleID uint) ([]model.User, error) {
